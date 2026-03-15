@@ -1,0 +1,15 @@
+# 개발 도구
+.claude/
+_temp_check.js
+
+# 기획 문서 (바이너리 — repo에 불필요)
+*.docx
+*.pptx
+
+# 피드백/메모 텍스트 파일
+*.txt
+
+# 기타
+download
+Thumbs.db
+.DS_Store

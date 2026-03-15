@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>크립토 봇 아레나 — 시즌1 캐릭터 시트</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0f0f1a;color:#f0f0f0;font-family:'Nunito',sans-serif;min-height:100vh;}
+
+/* Hero */
+.hero{background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#0f0f1a 100%);padding:60px 24px 40px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(255,184,48,.12) 0%,transparent 65%);}
+.hero-tag{display:inline-block;background:rgba(255,184,48,.15);border:1px solid rgba(255,184,48,.4);color:#ffb830;border-radius:20px;padding:5px 16px;font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.hero-title{font-size:clamp(32px,6vw,56px);font-weight:900;letter-spacing:-2px;line-height:1.1;margin-bottom:10px;}
+.hero-title span{background:linear-gradient(135deg,#ffb830,#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:16px;font-weight:600;color:#8888aa;margin-bottom:32px;}
+.season-pill{display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:30px;padding:8px 20px;font-size:13px;font-weight:700;color:#aaa;}
+.sp-dot{width:8px;height:8px;background:#3ecf8e;border-radius:50%;animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.4)}}
+
+/* Nav tabs */
+.nav-tabs{display:flex;justify-content:center;gap:12px;padding:24px;flex-wrap:wrap;}
+.nt{padding:10px 22px;border-radius:20px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#888;transition:all .25s;}
+.nt.active,.nt:hover{color:#fff;}
+.nt[data-c="rabbit"].active{background:rgba(62,207,142,.15);border-color:#3ecf8e;color:#3ecf8e;}
+.nt[data-c="goat"].active{background:rgba(255,184,48,.15);border-color:#ffb830;color:#ffb830;}
+.nt[data-c="bear"].active{background:rgba(167,139,250,.15);border-color:#a78bfa;color:#a78bfa;}
+.nt[data-c="fox"].active{background:rgba(255,107,107,.15);border-color:#ff6b6b;color:#ff6b6b;}
+
+/* Sheet wrapper */
+.sheets{padding:0 24px 80px;max-width:1100px;margin:0 auto;}
+.sheet{display:none;animation:fadeIn .4s ease;}
+.sheet.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* Sheet layout */
+.sheet-inner{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:700px){.sheet-inner{grid-template-columns:1fr;}}
+
+/* Left: Art card */
+.art-card{border-radius:24px;padding:32px 24px;text-align:center;position:relative;overflow:hidden;}
+.art-card::before{content:'';position:absolute;inset:0;opacity:.07;}
+
+.rabbit .art-card{background:linear-gradient(135deg,#0a2e1f,#0d3d27);border:2px solid rgba(62,207,142,.3);}
+.rabbit .art-card::before{background:radial-gradient(circle at 50% 30%,#3ecf8e,transparent 60%);}
+.goat .art-card{background:linear-gradient(135deg,#2a1f00,#3a2a00);border:2px solid rgba(255,184,48,.3);}
+.goat .art-card::before{background:radial-gradient(circle at 50% 30%,#ffb830,transparent 60%);}
+.bear .art-card{background:linear-gradient(135deg,#1a0a2e,#220f3d);border:2px solid rgba(167,139,250,.3);}
+.bear .art-card::before{background:radial-gradient(circle at 50% 30%,#a78bfa,transparent 60%);}
+.fox .art-card{background:linear-gradient(135deg,#2e0a0a,#3d1010);border:2px solid rgba(255,107,107,.3);}
+.fox .art-card::before{background:radial-gradient(circle at 50% 30%,#ff6b6b,transparent 60%);}
+
+.char-em{font-size:120px;line-height:1;display:block;margin-bottom:12px;filter:drop-shadow(0 0 30px var(--c));animation:charFloat 3s ease infinite;}
+@keyframes charFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+.char-name{font-weight:900;font-size:32px;letter-spacing:-1px;margin-bottom:4px;}
+.char-eng{font-size:14px;font-weight:700;opacity:.5;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.type-badge{display:inline-block;border-radius:20px;padding:5px 16px;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;}
+.rabbit .type-badge{background:rgba(62,207,142,.2);color:#3ecf8e;border:1px solid rgba(62,207,142,.4);}
+.goat .type-badge{background:rgba(255,184,48,.2);color:#ffb830;border:1px solid rgba(255,184,48,.4);}
+.bear .type-badge{background:rgba(167,139,250,.2);color:#a78bfa;border:1px solid rgba(167,139,250,.4);}
+.fox .type-badge{background:rgba(255,107,107,.2);color:#ff6b6b;border:1px solid rgba(255,107,107,.4);}
+
+.char-quote{font-size:14px;font-weight:700;font-style:italic;opacity:.7;line-height:1.6;margin-bottom:20px;padding:12px 16px;background:rgba(255,255,255,.04);border-radius:12px;border-left:3px solid var(--c);}
+
+/* Stat bars */
+.stats-list{display:flex;flex-direction:column;gap:10px;text-align:left;}
+.stat-row{display:flex;align-items:center;gap:10px;}
+.stat-lbl{font-size:11px;font-weight:800;letter-spacing:1px;color:#888;width:64px;flex-shrink:0;}
+.stat-track{flex:1;height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.stat-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.22,1,.36,1);}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;width:28px;text-align:right;flex-shrink:0;}
+
+/* Right: info panels */
+.info-col{display:flex;flex-direction:column;gap:16px;}
+.panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;}
+.panel-title{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#666;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.panel-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07);}
+
+/* Story */
+.story-text{font-size:13px;font-weight:600;color:#ccc;line-height:1.8;}
+
+/* Design */
+.design-items{display:flex;flex-direction:column;gap:8px;}
+.di{display:flex;align-items:flex-start;gap:10px;font-size:13px;}
+.di-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+.di-text{font-weight:600;color:#ccc;line-height:1.6;}
+.di-text b{font-weight:800;}
+
+/* Personality */
+.pers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pg-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;font-size:11px;}
+.pg-l{font-weight:800;color:#666;letter-spacing:.5px;margin-bottom:4px;}
+.pg-v{font-weight:700;color:#ddd;line-height:1.5;}
+
+/* Bankruptcy */
+.bankrupt-rows{display:flex;flex-direction:column;gap:10px;}
+.br-row{border-radius:12px;padding:12px 14px;}
+.br-label{font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;opacity:.7;}
+.br-text{font-size:13px;font-weight:700;line-height:1.5;}
+
+.rabbit .br-row.lose{background:rgba(62,207,142,.06);border:1px solid rgba(62,207,142,.15);}
+.rabbit .br-row.revive{background:rgba(62,207,142,.1);border:1px solid rgba(62,207,142,.25);}
+.goat .br-row.lose{background:rgba(255,184,48,.06);border:1px solid rgba(255,184,48,.15);}
+.goat .br-row.revive{background:rgba(255,184,48,.1);border:1px solid rgba(255,184,48,.25);}
+.bear .br-row.lose{background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.15);}
+.bear .br-row.revive{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);}
+.fox .br-row.lose{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);}
+.fox .br-row.revive{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);}
+
+/* Color vars per character */
+.rabbit{--c:#3ecf8e;}
+.goat{--c:#ffb830;}
+.bear{--c:#a78bfa;}
+.fox{--c:#ff6b6b;}
+
+/* Footer */
+.footer{text-align:center;padding:40px 24px;color:#444;font-size:12px;font-weight:700;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">🦊 폭스 디자이너 에이전트 — 공식 캐릭터 시트</div>
+  <h1 class="hero-title">시즌 1 캐릭터 <span>바이블</span></h1>
+  <p class="hero-sub">크립토 봇 아레나 · 4종 수인 캐릭터 공식 디자인 문서</p>
+  <div class="season-pill"><div class="sp-dot"></div><span>SEASON 1 · BULL RUSH · 4 CHARACTERS CONFIRMED</span></div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nt active" data-c="rabbit" onclick="showChar('rabbit')">🐰 FLASH · 스캘핑</div>
+  <div class="nt" data-c="goat" onclick="showChar('goat')">🐐 THE GOAT · 장기</div>
+  <div class="nt" data-c="bear" onclick="showChar('bear')">🐻 GRIZZLY · 관망</div>
+  <div class="nt" data-c="fox" onclick="showChar('fox')">🦊 SLY · 추세</div>
+</div>
+
+<div class="sheets">
+
+  <!-- RABBIT -->
+  <div class="sheet active rabbit" id="sheet-rabbit">
+    <div class="sheet-inner">
+      <div class="art-card">
+        <span class="char-em" style="--c:#3ecf8e">🐰</span>
+        <div class="char-name" style="color:#3ecf8e">FLASH</div>
+        <div class="char-eng">단타 토끼</div>
+        <div class="type-badge">⚡ 스캘핑 마스터</div>
+        <div class="char-quote">"1분도 길다. 내 세계에선<br>0.3초가 영원이야."</div>
+        <div class="stats-list">
+          <div class="stat-row"><span class="stat-lbl">속도</span><div class="stat-track"><div class="stat-fill" style="width:96%;background:linear-gradient(90deg,#3ecf8e,#00d4aa)"></div></div><span class="stat-val" style="color:#3ecf8e">96</span></div>
+          <div class="stat-row"><span class="stat-lbl">리스크</span><div class="stat-track"><div class="stat-fill" style="width:78%;background:linear-gradient(90deg,#ff6b6b,#ff8e53)"></div></div><span class="stat-val" style="color:#ff6b6b">78</span></div>
+          <div class="stat-row"><span class="stat-lbl">인내심</span><div class="stat-track"><div class="stat-fill" style="width:12%;background:linear-gradient(90deg,#60a5fa,#818cf8)"></div></div><span class="stat-val" style="color:#60a5fa">12</span></div>
+          <div class="stat-row"><span class="stat-lbl">분석력</span><div class="stat-track"><div class="stat-fill" style="width:55%;background:linear-gradient(90deg,#a78bfa,#c084fc)"></div></div><span class="stat-val" style="color:#a78bfa">55</span></div>
+          <div class="stat-row"><span class="stat-lbl">회복력</span><div class="stat-track"><div class="stat-fill" style="width:82%;background:linear-gradient(90deg,#f472b6,#fb7185)"></div></div><span class="stat-val" style="color:#f472b6">82</span></div>
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="panel">
+          <div class="panel-title">🧬 캐릭터 스토리</div>
+          <div class="story-text">전직 e스포츠 프로게이머 출신의 천재 단타러. 반응속도 0.18초, 세계 랭킹 TOP 3의 핸드스피드를 가졌지만 팀플레이보다 솔로 플레이가 맞아서 코인 스캘핑으로 전향했다.<br><br>항상 커다란 헤드폰을 끼고 리듬게임 사운드트랙을 들으며 트레이딩하는 특이한 습관이 있다. 차트를 보는 눈이 아니라 '소리로 시장을 듣는다'고 주장한다.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎨 비주얼 디자인 스펙</div>
+          <div class="design-items">
+            <div class="di"><div class="di-icon">🎧</div><div class="di-text"><b>헤드폰</b> — 커스텀 네온 그린 LED 헤드폰. 귀를 완전히 덮는 오버이어 타입.</div></div>
+            <div class="di"><div class="di-icon">👟</div><div class="di-text"><b>스니커즈</b> — 코랄-화이트 투톤 하이탑. 밑창에 스프링 디테일 (속도감 표현).</div></div>
+            <div class="di"><div class="di-icon">🧥</div><div class="di-text"><b>오버핏 후드</b> — 민트 그린 베이스에 번개 패턴 그래픽. 소매에 ⚡ 자수.</div></div>
+            <div class="di"><div class="di-icon">👀</div><div class="di-text"><b>눈빛</b> — 초롱초롱한 루비 레드 눈. 빠르게 깜빡임 (애니메이션 키포인트).</div></div>
+            <div class="di"><div class="di-icon">🐾</div><div class="di-text"><b>귀</b> — 한쪽 귀는 헤드폰에 눌려 접힘. 핑크 안쪽 귀 포인트.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎭 성격 프로파일</div>
+          <div class="pers-grid">
+            <div class="pg-item"><div class="pg-l">성격</div><div class="pg-v">충동적·열정적·ADHD 성향</div></div>
+            <div class="pg-item"><div class="pg-l">말버릇</div><div class="pg-v">"잠깐만" "바로" "아 이거다"</div></div>
+            <div class="pg-item"><div class="pg-l">좋아하는 것</div><div class="pg-v">초단타, 리듬게임, 에너지드링크</div></div>
+            <div class="pg-item"><div class="pg-l">싫어하는 것</div><div class="pg-v">기다리는 것, 느린 인터넷, 홀더</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">💀 파산 시나리오</div>
+          <div class="bankrupt-rows">
+            <div class="br-row lose">
+              <div class="br-label">💥 파산 대사</div>
+              <div class="br-text">"너무 빨랐나?! 아니 분명 맞았는데?! ㅋㅋ 뭐야 진짜"<br><span style="opacity:.5;font-size:11px">— 화면 진동 + 번개 이펙트 폭발</span></div>
+            </div>
+            <div class="br-row revive">
+              <div class="br-label">⚡ 재기 대사</div>
+              <div class="br-text">"이번엔 0.1초 더 빠르게 간다. 준비됐어? 3, 2, 1—"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GOAT -->
+  <div class="sheet goat" id="sheet-goat">
+    <div class="sheet-inner">
+      <div class="art-card">
+        <span class="char-em" style="--c:#ffb830">🐐</span>
+        <div class="char-name" style="color:#ffb830">THE GOAT</div>
+        <div class="char-eng">워런 염소</div>
+        <div class="type-badge">⏳ 장기 투자 거장</div>
+        <div class="char-quote">"시간은 좋은 기업의 편이고,<br>나쁜 가격의 적이다."</div>
+        <div class="stats-list">
+          <div class="stat-row"><span class="stat-lbl">인내심</span><div class="stat-track"><div class="stat-fill" style="width:98%;background:linear-gradient(90deg,#ffb830,#ffd700)"></div></div><span class="stat-val" style="color:#ffb830">98</span></div>
+          <div class="stat-row"><span class="stat-lbl">분석력</span><div class="stat-track"><div class="stat-fill" style="width:88%;background:linear-gradient(90deg,#a78bfa,#c084fc)"></div></div><span class="stat-val" style="color:#a78bfa">88</span></div>
+          <div class="stat-row"><span class="stat-lbl">리스크</span><div class="stat-track"><div class="stat-fill" style="width:35%;background:linear-gradient(90deg,#ff6b6b,#ff8e53)"></div></div><span class="stat-val" style="color:#ff6b6b">35</span></div>
+          <div class="stat-row"><span class="stat-lbl">속도</span><div class="stat-track"><div class="stat-fill" style="width:18%;background:linear-gradient(90deg,#3ecf8e,#00d4aa)"></div></div><span class="stat-val" style="color:#3ecf8e">18</span></div>
+          <div class="stat-row"><span class="stat-lbl">회복력</span><div class="stat-track"><div class="stat-fill" style="width:70%;background:linear-gradient(90deg,#f472b6,#fb7185)"></div></div><span class="stat-val" style="color:#f472b6">70</span></div>
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="panel">
+          <div class="panel-title">🧬 캐릭터 스토리</div>
+          <div class="story-text">수백 년 역사를 가진 코인 가문의 후예로, 어린 시절부터 할아버지에게 "사고 기다려라"를 귀에 못이 박히게 들었다. 전통적인 가치투자 철학을 코인 시장에 그대로 이식한 이단아.<br><br>동양식 두루마기와 중동풍 문양 로브를 현대적으로 재해석한 맞춤 의상을 즐겨 입으며, 빈티지 회중시계로 시간을 재는 것이 습관이다. 단안경(모노클)으로 차트를 들여다볼 때 가장 무서운 상대가 된다.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎨 비주얼 디자인 스펙</div>
+          <div class="design-items">
+            <div class="di"><div class="di-icon">👘</div><div class="di-text"><b>두루마기+로브 퓨전</b> — 딥 네이비 베이스에 금색 당초 문양. 현대적 실루엣으로 재해석.</div></div>
+            <div class="di"><div class="di-icon">🕵️</div><div class="di-text"><b>단안경(모노클)</b> — 금도금 프레임. 오른쪽 눈에 착용. 캐릭터 아이덴티티 최우선 아이템.</div></div>
+            <div class="di"><div class="di-icon">⌚</div><div class="di-text"><b>회중시계</b> — 한 손에 항상 들고 있음. 뚜껑에 BTC 로고 음각 새김.</div></div>
+            <div class="di"><div class="di-icon">🦷</div><div class="di-text"><b>수염</b> — 풍성한 크림색 염소 수염. 지혜와 연륜 표현의 핵심.</div></div>
+            <div class="di"><div class="di-icon">🐾</div><div class="di-text"><b>뿔</b> — 웅장하고 굵은 나선형 뿔. 금색 포인트 밴드 2개.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎭 성격 프로파일</div>
+          <div class="pers-grid">
+            <div class="pg-item"><div class="pg-l">성격</div><div class="pg-v">침착·철학적·고집스러움</div></div>
+            <div class="pg-item"><div class="pg-l">말버릇</div><div class="pg-v">"기다려라" "시간이 답이야" "흠"</div></div>
+            <div class="pg-item"><div class="pg-l">좋아하는 것</div><div class="pg-v">가치분석, 차 한 잔, 긴 호흡</div></div>
+            <div class="pg-item"><div class="pg-l">싫어하는 것</div><div class="pg-v">단타, 패닉셀, 차트 노이즈</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">💀 파산 시나리오</div>
+          <div class="bankrupt-rows">
+            <div class="br-row lose">
+              <div class="br-label">💥 파산 대사</div>
+              <div class="br-text">"...존버가 부족했다. 반성한다."<br><span style="opacity:.5;font-size:11px">— 묵묵히 퇴장. 회중시계를 닫는 SFX.</span></div>
+            </div>
+            <div class="br-row revive">
+              <div class="br-label">⏳ 재기 대사</div>
+              <div class="br-text">"다시 산으로 올라간다. 이번엔 더 오래 기다린다."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEAR -->
+  <div class="sheet bear" id="sheet-bear">
+    <div class="sheet-inner">
+      <div class="art-card">
+        <span class="char-em" style="--c:#a78bfa">🐻</span>
+        <div class="char-name" style="color:#a78bfa">GRIZZLY</div>
+        <div class="char-eng">꿀잠 곰</div>
+        <div class="type-badge">😴 관망·방어 전문가</div>
+        <div class="char-quote">"폭락장엔 자는 게 최고야.<br>눈 뜨면 바닥이거든."</div>
+        <div class="stats-list">
+          <div class="stat-row"><span class="stat-lbl">인내심</span><div class="stat-track"><div class="stat-fill" style="width:92%;background:linear-gradient(90deg,#a78bfa,#c084fc)"></div></div><span class="stat-val" style="color:#a78bfa">92</span></div>
+          <div class="stat-row"><span class="stat-lbl">방어력</span><div class="stat-track"><div class="stat-fill" style="width:95%;background:linear-gradient(90deg,#60a5fa,#818cf8)"></div></div><span class="stat-val" style="color:#60a5fa">95</span></div>
+          <div class="stat-row"><span class="stat-lbl">리스크</span><div class="stat-track"><div class="stat-fill" style="width:22%;background:linear-gradient(90deg,#ff6b6b,#ff8e53)"></div></div><span class="stat-val" style="color:#ff6b6b">22</span></div>
+          <div class="stat-row"><span class="stat-lbl">속도</span><div class="stat-track"><div class="stat-fill" style="width:28%;background:linear-gradient(90deg,#3ecf8e,#00d4aa)"></div></div><span class="stat-val" style="color:#3ecf8e">28</span></div>
+          <div class="stat-row"><span class="stat-lbl">직감</span><div class="stat-track"><div class="stat-fill" style="width:75%;background:linear-gradient(90deg,#ffb830,#ffd700)"></div></div><span class="stat-val" style="color:#ffb830">75</span></div>
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="panel">
+          <div class="panel-title">🧬 캐릭터 스토리</div>
+          <div class="story-text">원래는 퀀트 트레이더였지만, 2022년 루나 사태를 자는 동안 그냥 지나치면서 손실을 최소화한 것을 계기로 "안 하는 것이 최선"이라는 철학을 갖게 됐다.<br><br>늘 편안한 파자마 차림에 코코아 머그잔을 든 채 시장을 관망한다. 폭락장에서 가장 강하고, 횡보장에서 제일 지루해한다. 수면 안대를 이마에 올린 모습이 트레이드마크.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎨 비주얼 디자인 스펙</div>
+          <div class="design-items">
+            <div class="di"><div class="di-icon">🩲</div><div class="di-text"><b>파자마 세트</b> — 라벤더 퍼플 줄무늬 수면 바지 + 나이트가운. 폭신한 재질감 필수.</div></div>
+            <div class="di"><div class="di-icon">😴</div><div class="di-text"><b>수면 안대</b> — 이마에 걸쳐 올린 상태. 노란 별 무늬. 내려쓰면 '관망 모드' 연출.</div></div>
+            <div class="di"><div class="di-icon">☕</div><div class="di-text"><b>코코아 머그잔</b> — 오른손에 항상 들고 있음. 연기 모락모락. "HODL" 문구 새김.</div></div>
+            <div class="di"><div class="di-icon">🐾</div><div class="di-text"><b>발바닥</b> — 풍성한 보라색 털. 슬리퍼 신고 있음. 귀여움 최대화.</div></div>
+            <div class="di"><div class="di-icon">⭐</div><div class="di-text"><b>귀 안쪽</b> — 연한 핑크. 수면 안대 끈이 귀 뒤로 넘어가는 디테일.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎭 성격 프로파일</div>
+          <div class="pers-grid">
+            <div class="pg-item"><div class="pg-l">성격</div><div class="pg-v">여유로움·달관·무덤덤</div></div>
+            <div class="pg-item"><div class="pg-l">말버릇</div><div class="pg-v">"뭐 어때" "어차피 오르겠지" "zzz"</div></div>
+            <div class="pg-item"><div class="pg-l">좋아하는 것</div><div class="pg-v">하락장, 코코아, 낮잠</div></div>
+            <div class="pg-item"><div class="pg-l">싫어하는 것</div><div class="pg-v">bull run 과열, FOMO, 알람</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">💀 파산 시나리오</div>
+          <div class="bankrupt-rows">
+            <div class="br-row lose">
+              <div class="br-label">💥 파산 대사</div>
+              <div class="br-text">"...예상했다. 하락이 더 남아있었군."<br><span style="opacity:.5;font-size:11px">— 담담하게 코코아 한 모금. 천천히 퇴장.</span></div>
+            </div>
+            <div class="br-row revive">
+              <div class="br-label">😴 재기 대사</div>
+              <div class="br-text">"이제야 진짜 바닥이다. 코코아 한 잔 더 끓이고 시작하지."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOX -->
+  <div class="sheet fox" id="sheet-fox">
+    <div class="sheet-inner">
+      <div class="art-card">
+        <span class="char-em" style="--c:#ff6b6b">🦊</span>
+        <div class="char-name" style="color:#ff6b6b">SLY</div>
+        <div class="char-eng">꾀돌이 여우</div>
+        <div class="type-badge">📈 추세추종 분석가</div>
+        <div class="char-quote">"흐름을 읽는 게 먼저다.<br>예측이 아니라 적응이야."</div>
+        <div class="stats-list">
+          <div class="stat-row"><span class="stat-lbl">분석력</span><div class="stat-track"><div class="stat-fill" style="width:94%;background:linear-gradient(90deg,#ff6b6b,#ff8e53)"></div></div><span class="stat-val" style="color:#ff6b6b">94</span></div>
+          <div class="stat-row"><span class="stat-lbl">속도</span><div class="stat-track"><div class="stat-fill" style="width:68%;background:linear-gradient(90deg,#3ecf8e,#00d4aa)"></div></div><span class="stat-val" style="color:#3ecf8e">68</span></div>
+          <div class="stat-row"><span class="stat-lbl">인내심</span><div class="stat-track"><div class="stat-fill" style="width:60%;background:linear-gradient(90deg,#ffb830,#ffd700)"></div></div><span class="stat-val" style="color:#ffb830">60</span></div>
+          <div class="stat-row"><span class="stat-lbl">리스크</span><div class="stat-track"><div class="stat-fill" style="width:50%;background:linear-gradient(90deg,#a78bfa,#c084fc)"></div></div><span class="stat-val" style="color:#a78bfa">50</span></div>
+          <div class="stat-row"><span class="stat-lbl">회복력</span><div class="stat-track"><div class="stat-fill" style="width:65%;background:linear-gradient(90deg,#f472b6,#fb7185)"></div></div><span class="stat-val" style="color:#f472b6">65</span></div>
+        </div>
+      </div>
+      <div class="info-col">
+        <div class="panel">
+          <div class="panel-title">🧬 캐릭터 스토리</div>
+          <div class="story-text">전직 헤지펀드 퀀트 애널리스트. "시장은 예측할 수 없지만 반응할 수는 있다"는 신념으로 추세추종 알고리즘을 직접 개발했다. 코인 시장으로 전향한 후 3번의 시즌 연속 TOP 5를 기록한 전설.<br><br>맞춤 정장에 사각 프레임 안경을 낀 말쑥한 외모와 달리, 실제로는 고양이 영상을 보며 긴장을 푸는 소박한 취미를 갖고 있다.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎨 비주얼 디자인 스펙</div>
+          <div class="design-items">
+            <div class="di"><div class="di-icon">👔</div><div class="di-text"><b>맞춤 정장</b> — 다크 네이비 슬림핏. 코랄 레드 포켓 치프. 절제된 고급감.</div></div>
+            <div class="di"><div class="di-icon">🤓</div><div class="di-text"><b>사각 안경</b> — 골드 프레임 사각 안경. 렌즈에 차트 반사 이펙트 (애니메이션 포인트).</div></div>
+            <div class="di"><div class="di-icon">🦊</div><div class="di-text"><b>꼬리</b> — 풍성한 흰 끝 꼬리. 정장 뒤로 자연스럽게 빠져나옴. 자신감의 상징.</div></div>
+            <div class="di"><div class="di-icon">👂</div><div class="di-text"><b>귀</b> — 뾰족한 삼각 귀. 안쪽 크림 옐로우. 항상 바짝 세워 '집중' 표현.</div></div>
+            <div class="di"><div class="di-icon">🎨</div><div class="di-text"><b>볼 패턴</b> — 흰 볼 털. 코 주변 오렌지-크림 경계선. 섬세한 색상 그라데이션.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🎭 성격 프로파일</div>
+          <div class="pers-grid">
+            <div class="pg-item"><div class="pg-l">성격</div><div class="pg-v">냉철·자신감·완벽주의</div></div>
+            <div class="pg-item"><div class="pg-l">말버릇</div><div class="pg-v">"흥미롭군" "예상대로" "인정"</div></div>
+            <div class="pg-item"><div class="pg-l">좋아하는 것</div><div class="pg-v">추세 분석, 백테스팅, 데이터</div></div>
+            <div class="pg-item"><div class="pg-l">싫어하는 것</div><div class="pg-v">감정적 매매, 뇌동매매, 소음</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">💀 파산 시나리오</div>
+          <div class="bankrupt-rows">
+            <div class="br-row lose">
+              <div class="br-label">💥 파산 대사</div>
+              <div class="br-text">"흠. 흐름을 잘못 읽었군. 드물지만... 인정."<br><span style="opacity:.5;font-size:11px">— 안경 고쳐 쓰며 데이터 분석 모드 돌입.</span></div>
+            </div>
+            <div class="br-row revive">
+              <div class="br-label">📈 재기 대사</div>
+              <div class="br-text">"오차 원인 분석 완료. 다음 파동은 내가 먼저 잡는다."</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">🦊 폭스 디자이너 에이전트 제작 · 크립토 봇 아레나 시즌1 공식 캐릭터 바이블 · 2026</div>
+
+<script>
+function showChar(c){
+  document.querySelectorAll('.nt').forEach(n=>n.classList.remove('active'));
+  document.querySelector(`.nt[data-c="${c}"]`).classList.add('active');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sheet-'+c).classList.add('active');
+}
+</script>
+</body>
+</html>

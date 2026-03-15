@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>크립토 봇 아레나 — 파산 화면</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#faf7f2;--cream:#fff8ee;--card:#ffffff;--card2:#fefcf8;
+  --mint:#3ecf8e;--mint-lt:#d4f5e7;--coral:#ff6b6b;--coral-lt:#ffe0e0;
+  --gold:#ffb830;--gold-lt:#fff0c2;--sky:#60a5fa;--purple:#a78bfa;--purple-lt:#ede9fe;
+  --ink:#2d2a24;--ink2:#6b6560;--ink3:#b0a89e;
+  --neu-out:4px 4px 10px rgba(180,160,130,.22),-3px -3px 8px rgba(255,255,255,.85);
+  --neu-in:inset 3px 3px 8px rgba(180,160,130,.2),inset -2px -2px 6px rgba(255,255,255,.8);
+  --card-shadow:0 6px 24px rgba(140,110,70,.1);
+  --f:Nunito,sans-serif;--fm:JetBrains Mono,monospace;
+  --r:18px;
+}
+html{font-size:16px;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;margin:0 auto;min-height:100vh;overflow-x:hidden;}
+
+@keyframes fadeIn  {from{opacity:0}to{opacity:1}}
+@keyframes fadeUp  {from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes popIn   {0%{opacity:0;transform:scale(.6)}70%{transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes shake   {0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}30%{transform:translateX(10px)}45%{transform:translateX(-8px)}60%{transform:translateX(8px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}}
+@keyframes fallDown{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(80px) rotate(-20deg)}}
+@keyframes explosion{0%{transform:scale(0);opacity:1}60%{transform:scale(1.6);opacity:.8}100%{transform:scale(2);opacity:0}}
+@keyframes float   {0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse   {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes slideUp {from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes countUp {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes glowR   {0%,100%{box-shadow:0 0 0 0 rgba(255,107,107,.4)}50%{box-shadow:0 0 0 12px rgba(255,107,107,0)}}
+@keyframes spinSlow{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes coin    {0%{opacity:1;transform:translateY(0) scale(1) rotate(0)}100%{opacity:0;transform:translateY(-160px) scale(.3) rotate(540deg)}}
+@keyframes warningPulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes ticker  {from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes revealBar{from{width:0}to{width:var(--w)}}
+@keyframes screenShake{0%,100%{transform:none}10%{transform:translateX(-8px)}20%{transform:translateX(8px)}30%{transform:translateX(-6px)}40%{transform:translateX(6px)}50%{transform:translateX(-3px)}60%{transform:translateX(3px)}}
+
+/* === DEMO SELECTOR === */
+.demo-bar{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--ink);padding:10px 16px;display:flex;align-items:center;gap:10px;z-index:9999;flex-wrap:wrap;}
+.demo-lbl{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);flex-shrink:0;}
+.demo-btn{flex:1;padding:7px 0;border:none;border-radius:10px;font-family:var(--f);font-size:12px;font-weight:800;cursor:pointer;min-width:60px;transition:all .15s;}
+.demo-btn:active{transform:scale(.94);}
+.demo-btn[data-c="rabbit"]{background:var(--mint-lt);color:#1a7a50;}
+.demo-btn[data-c="goat"]  {background:var(--gold-lt);color:#7a5500;}
+.demo-btn[data-c="bear"]  {background:var(--purple-lt);color:#5b21b6;}
+.demo-btn[data-c="fox"]   {background:var(--coral-lt);color:#991b1b;}
+.trigger-btn{flex-shrink:0;padding:7px 14px;background:var(--coral);color:#fff;border:none;border-radius:10px;font-family:var(--f);font-size:12px;font-weight:800;cursor:pointer;transition:all .15s;}
+.trigger-btn:active{transform:scale(.94);}
+
+/* === WARNING PHASE === */
+.warn-phase{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);z-index:100;max-width:480px;margin:0 auto;}
+.warn-phase.hidden{display:none;}
+
+/* status bar */
+.sb{display:flex;justify-content:space-between;align-items:center;padding:60px 20px 8px;border-bottom:2px solid #f0ebe2;}
+.sb-l{font-family:var(--fm);font-size:12px;font-weight:700;color:var(--ink2);}
+.sb-r{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--ink2);}
+.live-pill{background:var(--mint-lt);color:var(--mint);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:4px;}
+.live-dot{width:6px;height:6px;background:var(--mint);border-radius:50%;animation:float .8s ease infinite;}
+
+.ticker-w{overflow:hidden;background:#fff0c2;border-bottom:2px solid var(--gold-lt);padding:6px 0;}
+.ticker-i{display:flex;white-space:nowrap;animation:ticker 22s linear infinite;}
+.t-item{font-family:var(--fm);font-size:11px;font-weight:700;padding:0 18px;color:var(--ink2);}
+.t-up{color:var(--mint);}.t-dn{color:var(--coral);}
+
+/* Warning banner */
+.warn-banner{margin:16px 20px;background:var(--coral-lt);border:3px solid var(--coral);border-radius:var(--r);padding:16px 18px;display:flex;align-items:center;gap:14px;animation:pulse 1.5s ease infinite;}
+.wb-icon{font-size:32px;flex-shrink:0;animation:warningPulse 1s ease infinite;}
+.wb-t{font-weight:900;font-size:16px;color:var(--coral);margin-bottom:2px;}
+.wb-s{font-size:12px;font-weight:600;color:var(--ink2);}
+
+/* Bot status card during warning */
+.bot-card{margin:0 20px 16px;background:var(--card);border-radius:var(--r);padding:18px;border:2px solid #f0ebe2;box-shadow:var(--card-shadow);}
+.bc-top{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.bc-av{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;font-size:32px;flex-shrink:0;box-shadow:var(--neu-out);}
+.bc-nm{font-weight:900;font-size:18px;letter-spacing:-.5px;margin-bottom:2px;}
+.bc-ch{font-size:12px;font-weight:600;color:var(--ink2);}
+.danger-bar-w{background:#f0ebe2;border-radius:8px;height:14px;overflow:hidden;margin-bottom:6px;position:relative;}
+.danger-bar{height:100%;border-radius:8px;transition:width 2s ease;background:linear-gradient(90deg,var(--coral),#ff3333);}
+.danger-labels{display:flex;justify-content:space-between;font-size:9px;font-weight:800;color:var(--ink3);}
+.danger-labels .bang{color:var(--coral);font-weight:900;}
+.amt-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+.amt-box{background:#f9f5ee;border-radius:var(--r);padding:10px 12px;box-shadow:var(--neu-in);}
+.ab-l{font-size:9px;font-weight:800;letter-spacing:1px;color:var(--ink3);margin-bottom:3px;}
+.ab-v{font-family:var(--fm);font-size:15px;font-weight:700;}
+
+.warn-actions{padding:0 20px;display:flex;flex-direction:column;gap:10px;}
+.wa-btn{width:100%;padding:14px;border-radius:var(--r);font-family:var(--f);font-weight:900;font-size:14px;cursor:pointer;border:none;transition:all .15s;box-shadow:var(--neu-out);display:flex;align-items:center;justify-content:center;gap:8px;}
+.wa-btn:active{transform:scale(.97);box-shadow:var(--neu-in);}
+.wa-p{background:linear-gradient(135deg,var(--coral),#cc3333);color:#fff;box-shadow:0 6px 20px rgba(255,107,107,.3),var(--neu-out);animation:glowR 2s ease infinite;}
+.wa-s{background:var(--card);color:var(--ink2);}
+
+/* === GAME OVER OVERLAY === */
+.go-overlay{position:fixed;inset:0;z-index:800;display:none;flex-direction:column;align-items:center;justify-content:flex-end;max-width:480px;margin:0 auto;}
+.go-overlay.show{display:flex;}
+.go-bg{position:absolute;inset:0;background:rgba(45,42,36,.6);backdrop-filter:blur(8px);animation:fadeIn .4s ease;}
+.go-panel{position:relative;width:100%;background:var(--cream);border-radius:28px 28px 0 0;padding:28px 24px 40px;animation:slideUp .5s cubic-bezier(.34,1.56,.64,1);}
+
+/* char explosion effect */
+.go-explosion{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:120px;height:120px;}
+.go-exp-ring{position:absolute;inset:0;border-radius:50%;border:4px solid var(--coral);animation:explosion 1s ease forwards;}
+.go-exp-ring:nth-child(2){animation-delay:.15s;border-color:var(--gold);}
+.go-exp-ring:nth-child(3){animation-delay:.3s;border-color:var(--coral);}
+.go-char-em{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;}
+
+.go-title-row{text-align:center;margin-bottom:20px;margin-top:16px;}
+.go-tag{display:inline-block;background:var(--coral-lt);color:var(--coral);border-radius:20px;padding:4px 14px;font-size:10px;font-weight:800;letter-spacing:2px;margin-bottom:10px;}
+.go-t{font-weight:900;font-size:30px;letter-spacing:-1px;line-height:1.1;margin-bottom:4px;}
+.go-quote{font-size:14px;font-weight:700;color:var(--ink2);font-style:italic;line-height:1.6;padding:12px 16px;background:rgba(255,107,107,.06);border-radius:12px;border-left:3px solid var(--coral);}
+
+/* stats summary */
+.go-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;}
+.go-st{background:var(--card);border:2px solid #f0ebe2;border-radius:var(--r);padding:12px 8px;text-align:center;box-shadow:var(--card-shadow);}
+.go-sv{font-family:var(--fm);font-size:16px;font-weight:700;margin-bottom:2px;}
+.go-sl{font-size:9px;font-weight:800;color:var(--ink3);letter-spacing:.5px;text-transform:uppercase;}
+
+.divider{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);text-align:center;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.divider::before,.divider::after{content:'';flex:1;height:2px;background:#f0ebe2;border-radius:2px;}
+
+/* Revival options */
+.revival-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.rv-btn{width:100%;padding:14px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--f);display:flex;align-items:center;gap:14px;transition:all .15s;box-shadow:var(--card-shadow);}
+.rv-btn:active{transform:scale(.97);}
+.rv-icon{font-size:28px;flex-shrink:0;}
+.rv-info{flex:1;text-align:left;}
+.rv-nm{font-weight:900;font-size:14px;margin-bottom:2px;}
+.rv-sub{font-size:11px;font-weight:600;color:var(--ink2);}
+.rv-price{font-family:var(--fm);font-weight:800;font-size:14px;flex-shrink:0;}
+.rv-primary{background:linear-gradient(135deg,var(--gold),#e6a020);box-shadow:0 6px 20px rgba(255,184,48,.35);}
+.rv-primary .rv-nm{color:#fff;}.rv-primary .rv-sub{color:rgba(255,255,255,.7);}.rv-primary .rv-price{color:#fff;}
+.rv-ad{background:var(--card);border:2px solid #f0ebe2;}
+.rv-free{background:var(--card);border:2px solid #f0ebe2;opacity:.7;}
+.rv-free.unlocked{opacity:1;border-color:var(--mint);}
+
+.go-footer{text-align:center;font-size:11px;font-weight:600;color:var(--ink3);line-height:1.7;}
+.go-footer a{color:var(--coral);font-weight:800;text-decoration:none;cursor:pointer;}
+
+/* coin burst */
+.coin-burst{position:fixed;bottom:300px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:9999;}
+.cb-coin{position:absolute;font-size:20px;animation:coin 1s ease forwards;}
+
+/* fame toast */
+.fame-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--card);border:2px solid var(--gold-lt);border-radius:20px;padding:10px 20px;font-size:13px;font-weight:800;z-index:9999;animation:fadeUp .35s ease;white-space:nowrap;box-shadow:0 8px 24px rgba(255,184,48,.2);}
+
+/* === REVIVAL SUCCESS === */
+.revived{position:fixed;inset:0;z-index:900;background:var(--cream);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;max-width:480px;margin:0 auto;}
+.revived.show{display:flex;animation:fadeIn .4s ease;}
+.rv-em{font-size:80px;margin-bottom:16px;animation:float 2s ease infinite;}
+.rv-title{font-weight:900;font-size:36px;letter-spacing:-1.5px;color:var(--mint);margin-bottom:6px;animation:popIn .5s ease .1s both;}
+.rv-sub-txt{font-size:14px;font-weight:700;color:var(--ink2);margin-bottom:24px;animation:fadeUp .4s ease .2s both;}
+.rv-seed{display:flex;align-items:center;gap:8px;background:var(--mint-lt);border:2px solid rgba(62,207,142,.3);border-radius:20px;padding:8px 20px;margin-bottom:28px;animation:popIn .5s ease .3s both;}
+.rv-seed-v{font-family:var(--fm);font-size:20px;font-weight:700;color:var(--mint);}
+.rv-seed-l{font-size:12px;font-weight:700;color:var(--ink2);}
+.rv-go{background:linear-gradient(135deg,var(--mint),#2db876);color:#fff;border:none;border-radius:var(--r);padding:16px 44px;font-family:var(--f);font-weight:900;font-size:16px;cursor:pointer;animation:fadeUp .4s ease .4s both;box-shadow:0 8px 24px rgba(62,207,142,.35);}
+.rv-go:active{transform:scale(.96);}
+
+/* Screen shake */
+body.shaking{animation:screenShake .6s ease;}
+</style>
+</head>
+<body>
+
+<!-- DEMO CONTROL BAR -->
+<div class="demo-bar">
+  <span class="demo-lbl">데모 캐릭터</span>
+  <button class="demo-btn" data-c="rabbit" onclick="setChar('rabbit')">🐰 FLASH</button>
+  <button class="demo-btn" data-c="goat"   onclick="setChar('goat')">🐐 GOAT</button>
+  <button class="demo-btn" data-c="bear"   onclick="setChar('bear')">🐻 GRIZZLY</button>
+  <button class="demo-btn" data-c="fox"    onclick="setChar('fox')">🦊 SLY</button>
+  <button class="trigger-btn" onclick="triggerGameOver()">💥 파산 트리거!</button>
+</div>
+
+<!-- === PHASE 1: WARNING === -->
+<div class="warn-phase" id="warnPhase">
+  <div class="sb">
+    <span class="sb-l">21:47</span>
+    <div class="sb-r"><div class="live-pill"><div class="live-dot"></div>LIVE</div><span>📶</span><span>🔋</span></div>
+  </div>
+  <div class="ticker-w"><div class="ticker-i" id="tkr"></div></div>
+
+  <div style="padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-weight:900;font-size:22px;letter-spacing:-1px;">봇 <span style="color:var(--gold)">아레나</span> 🏟️</span>
+    <div style="display:flex;gap:8px;"><div style="width:38px;height:38px;background:var(--card);border-radius:12px;display:grid;place-items:center;font-size:16px;box-shadow:var(--neu-out);cursor:pointer;">🔔</div></div>
+  </div>
+
+  <!-- WARNING BANNER -->
+  <div class="warn-banner" id="warnBanner">
+    <div class="wb-icon">⚠️</div>
+    <div>
+      <div class="wb-t">위험! 평가액 임계치 도달</div>
+      <div class="wb-s">시드의 <span id="warnPct" style="font-weight:800;color:var(--coral);">23%</span> 남음 · 파산 기준: 10%</div>
+    </div>
+  </div>
+
+  <!-- BOT CARD -->
+  <div class="bot-card">
+    <div class="bc-top">
+      <div class="bc-av" id="wAvBox" style="background:var(--mint-lt)"><span id="wAv">🐰</span></div>
+      <div>
+        <div class="bc-nm" id="wNm">플래시 v2.1</div>
+        <div class="bc-ch" id="wCh">캐릭터: FLASH · 스캘핑 마스터</div>
+      </div>
+    </div>
+    <!-- danger bar -->
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;">평가액 잔여율</div>
+    <div class="danger-bar-w">
+      <div class="danger-bar" id="dBar" style="width:23%;"></div>
+    </div>
+    <div class="danger-labels">
+      <span class="bang">💀 파산 (10%)</span>
+      <span id="wPctLbl" style="color:var(--coral);">현재 23%</span>
+      <span>시드 100%</span>
+    </div>
+    <div class="amt-row">
+      <div class="amt-box"><div class="ab-l">시작 시드</div><div class="ab-v" style="color:var(--ink);">100만원</div></div>
+      <div class="amt-box"><div class="ab-l">현재 평가액</div><div class="ab-v" style="color:var(--coral);" id="wAmt">23만원</div></div>
+      <div class="amt-box"><div class="ab-l">주간 수익</div><div class="ab-v" style="color:var(--coral);" id="wPnl">-77%</div></div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="warn-actions">
+    <button class="wa-btn wa-p" onclick="triggerGameOver()">💀 시뮬레이션: 파산 트리거</button>
+    <button class="wa-btn wa-s">⏸️ 봇 일시 정지</button>
+    <button class="wa-btn wa-s">⚙️ 전략 긴급 수정</button>
+  </div>
+
+  <div style="margin:14px 20px;background:var(--gold-lt);border:2px solid #ffe08a;border-radius:var(--r);padding:12px 14px;font-size:11px;font-weight:700;color:var(--ink2);line-height:1.7;">
+    💡 <b>파산 기준:</b> 평가액이 시작 시드의 <b>10% 이하</b>가 되면 봇이 강제 종료됩니다.<br>
+    주간 무료 리셋 잔여: <b style="color:var(--mint);">1회 남음</b> (매주 월요일 초기화)
+  </div>
+</div>
+
+<!-- === GAME OVER OVERLAY === -->
+<div class="go-overlay" id="goOverlay">
+  <div class="go-bg" onclick=""></div>
+  <div class="go-panel" id="goPanel">
+    <!-- floating char -->
+    <div class="go-explosion" id="goExplosion">
+      <div class="go-exp-ring"></div>
+      <div class="go-exp-ring"></div>
+      <div class="go-exp-ring"></div>
+      <div class="go-char-em" id="goCharEm">🐰</div>
+    </div>
+
+    <div class="go-title-row">
+      <div class="go-tag">💀 GAME OVER</div>
+      <div class="go-t" id="goTitle">파산했어요!</div>
+      <div class="go-quote" id="goQuote">"너무 빨랐나?! 아니 분명 맞았는데?! ㅋㅋ 뭐야 진짜"</div>
+    </div>
+
+    <div class="go-stats">
+      <div class="go-st"><div class="go-sv" style="color:var(--coral);" id="goPnl">-77%</div><div class="go-sl">최종 손익</div></div>
+      <div class="go-st"><div class="go-sv" style="color:var(--sky);" id="goTrades">47</div><div class="go-sl">총 거래 횟수</div></div>
+      <div class="go-st"><div class="go-sv" style="color:var(--ink);" id="goRank">#247</div><div class="go-sl">최종 순위</div></div>
+    </div>
+
+    <div class="divider">부활 방법 선택</div>
+
+    <div class="revival-opts">
+      <button class="rv-btn rv-primary" onclick="doRevive('paid')">
+        <div class="rv-icon">💎</div>
+        <div class="rv-info"><div class="rv-nm">부활권 사용</div><div class="rv-sub">시드 100만원 전액 복구 · 즉시 부활</div></div>
+        <div class="rv-price">990원</div>
+      </button>
+      <button class="rv-btn rv-ad" onclick="doRevive('ad')">
+        <div class="rv-icon">📺</div>
+        <div class="rv-info"><div class="rv-nm">광고 보고 부활</div><div class="rv-sub">30초 광고 시청 → 시드 50만원 복구</div></div>
+        <div class="rv-price" style="color:var(--mint);">무료</div>
+      </button>
+      <button class="rv-btn rv-free unlocked" id="freeResetBtn" onclick="doRevive('free')">
+        <div class="rv-icon">🔄</div>
+        <div class="rv-info"><div class="rv-nm">주간 무료 리셋</div><div class="rv-sub">시드 100만원 복구 · 1회 남음</div></div>
+        <div class="rv-price" style="color:var(--gold);">무료</div>
+      </button>
+    </div>
+
+    <div class="go-footer">
+      이번 시즌 순위는 기록에 남아요 🏅<br>
+      <a onclick="closeFame()">파산 명예의 전당 보기 →</a>
+    </div>
+  </div>
+</div>
+
+<!-- === REVIVED === -->
+<div class="revived" id="revived">
+  <div class="rv-em" id="rvEm">🐰</div>
+  <div class="rv-title">부활!</div>
+  <div class="rv-sub-txt" id="rvSub">플래시 v2.1 재기 준비 완료</div>
+  <div class="rv-seed">
+    <div class="rv-seed-l">복구 시드</div>
+    <div class="rv-seed-v" id="rvSeedV">100만원</div>
+  </div>
+  <button class="rv-go" onclick="closeRevive()">🏆 투기장으로 복귀!</button>
+</div>
+
+<script>
+const CHARS = {
+  rabbit:{e:'🐰',n:'플래시 v2.1',ch:'캐릭터: FLASH · 스캘핑 마스터',quote:'"너무 빨랐나?! 아니 분명 맞았는데?! ㅋㅋ 뭐야 진짜"',revive:'이번엔 0.1초 더 빠르게 간다. 준비됐어?',avBg:'var(--mint-lt)',goBg:'linear-gradient(160deg,#0a2418,#0d3020)',c:'#3ecf8e'},
+  goat: {e:'🐐',n:'갓생염소',  ch:'캐릭터: THE GOAT · 장기 투자',quote:'"...존버가 부족했다. 반성한다."',           revive:'다시 산으로 올라간다. 이번엔 더 오래 기다린다.',avBg:'var(--gold-lt)',goBg:'linear-gradient(160deg,#1a1200,#2a1e00)',c:'#ffb830'},
+  bear: {e:'🐻',n:'꿀잠곰봇',  ch:'캐릭터: GRIZZLY · 관망·방어',quote:'"...예상했다. 하락이 더 남아있었군."',      revive:'이제야 진짜 바닥이다. 코코아 한 잔 더 끓이고 시작하지.',avBg:'var(--purple-lt)',goBg:'linear-gradient(160deg,#0d0820,#160c30)',c:'#a78bfa'},
+  fox:  {e:'🦊',n:'SLY9000',   ch:'캐릭터: SLY · 추세추종 분석가',quote:'"흠. 흐름을 잘못 읽었군. 드물지만... 인정."',revive:'오차 원인 분석 완료. 다음 파동은 내가 먼저 잡는다.',avBg:'var(--coral-lt)',goBg:'linear-gradient(160deg,#200808,#300f0f)',c:'#ff6b6b'},
+};
+
+let curChar = 'rabbit';
+let goOpen = false;
+
+function setChar(c) {
+  curChar = c;
+  const ch = CHARS[c];
+  // update warning card
+  document.getElementById('wAv').textContent = ch.e;
+  document.getElementById('wAvBox').style.background = ch.avBg;
+  document.getElementById('wNm').textContent = ch.n;
+  document.getElementById('wCh').textContent = ch.ch;
+}
+
+// Ticker
+const TKRS=[{n:'BTC',p:'93,421,000',c:'+2.41%',d:'up'},{n:'ETH',p:'4,182,000',c:'+1.87%',d:'up'},{n:'SOL',p:'218,400',c:'-0.93%',d:'dn'},{n:'XRP',p:'892',c:'+4.22%',d:'up'},{n:'DOGE',p:'245',c:'-1.11%',d:'dn'}];
+document.getElementById('tkr').innerHTML=[...TKRS,...TKRS].map(t=>`<span class="t-item">${t.n}&nbsp;<span class="${t.d==='up'?'t-up':'t-dn'}">${t.d==='up'?'▲':'▼'} ${t.c}</span>&nbsp; ${t.p}원</span>`).join('');
+
+// Warning counter anim
+let warningPct = 23;
+setInterval(() => {
+  if (goOpen) return;
+  warningPct = Math.max(10.1, warningPct - (Math.random() * 0.8));
+  const p = warningPct.toFixed(1);
+  document.getElementById('dBar').style.width = p + '%';
+  document.getElementById('wPctLbl').textContent = '현재 ' + p + '%';
+  document.getElementById('warnPct').textContent = p + '%';
+  document.getElementById('wAmt').textContent = (warningPct * 10000).toLocaleString('ko-KR').slice(0,-1) + '원';
+  const pnl = -(100 - warningPct).toFixed(0);
+  document.getElementById('wPnl').textContent = pnl + '%';
+}, 1400);
+
+function triggerGameOver() {
+  if (goOpen) return;
+  goOpen = true;
+
+  const ch = CHARS[curChar];
+
+  // screen shake
+  document.body.classList.add('shaking');
+  setTimeout(() => document.body.classList.remove('shaking'), 700);
+
+  // hide warning, drain bar
+  warningPct = 10;
+  document.getElementById('dBar').style.width = '10%';
+
+  // populate overlay
+  document.getElementById('goCharEm').textContent = ch.e;
+  document.getElementById('goTitle').textContent = ch.e + ' 파산했어요!';
+  document.getElementById('goQuote').textContent = ch.quote;
+  document.getElementById('goPnl').textContent = '-' + (100 - warningPct).toFixed(0) + '%';
+  document.getElementById('goTrades').textContent = Math.floor(Math.random()*40+20);
+  document.getElementById('goRank').textContent = '#' + Math.floor(Math.random()*200+50);
+
+  // panel bg per char
+  document.getElementById('goPanel').style.background = '';
+
+  // coins fall
+  spawnCoins('💸', 12);
+
+  setTimeout(() => {
+    document.getElementById('goOverlay').classList.add('show');
+  }, 400);
+}
+
+function spawnCoins(emoji, n) {
+  const c = document.createElement('div');
+  c.className = 'coin-burst';
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('div');
+    s.className = 'cb-coin';
+    s.textContent = emoji;
+    const x = (Math.random() - .5) * 260;
+    s.style.cssText = `left:${x}px;animation-delay:${i*0.06}s;animation-duration:${.8+Math.random()*.5}s;`;
+    c.appendChild(s);
+  }
+  document.body.appendChild(c);
+  setTimeout(() => c.remove(), 1500);
+}
+
+function doRevive(type) {
+  const ch = CHARS[curChar];
+  const seedMap = { paid: '100만원 (전액)', ad: '50만원 (50%)', free: '100만원 (전액)' };
+
+  document.getElementById('goOverlay').classList.remove('show');
+  document.getElementById('rvEm').textContent = ch.e;
+  document.getElementById('rvSub').textContent = `"${ch.revive}"`;
+  document.getElementById('rvSeedV').textContent = seedMap[type];
+
+  spawnCoins('💰', 10);
+  spawnCoins('⭐', 6);
+
+  setTimeout(() => {
+    document.getElementById('revived').classList.add('show');
+  }, 300);
+}
+
+function closeRevive() {
+  document.getElementById('revived').classList.remove('show');
+  goOpen = false;
+  warningPct = 85;
+  document.getElementById('dBar').style.width = '85%';
+}
+
+function closeFame() {
+  const t = document.createElement('div');
+  t.className = 'fame-toast';
+  t.innerHTML = '🏅 파산 명예의 전당 — Phase 2에서 오픈!';
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// Init
+setChar('rabbit');
+</script>
+</body>
+</html>
