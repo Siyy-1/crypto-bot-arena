@@ -2243,6 +2243,8 @@ function resetBlocks(){
   const bz=document.getElementById('buyBlks');const sz=document.getElementById('sellBlks');
   if(bz)bz.innerHTML='<div class="z-empty"><div class="z-empty-i">📈</div><div class="z-empty-t">위 블록을 탭해서 추가해요!</div></div>';
   if(sz)sz.innerHTML='<div class="z-empty"><div class="z-empty-i">📉</div><div class="z-empty-t">위 블록을 탭해서 추가해요!</div></div>';
+  // _botBlocks JS 배열도 초기화 (DOM과 동기화)
+  _botBlocks.buy = []; _botBlocks.sell = [];
 }
 function setFStep(n){
   document.querySelectorAll('.f-scr').forEach(s=>s.classList.remove('active'));
@@ -2460,7 +2462,7 @@ function initCurrency(){
     setTimeout(function(){
 
 // ── 미션 진행 체크 ──────────────────────────────────────
-function checkTraideMission(){
+function checkTradeMission(){
   var today = new Date().toDateString();
   var key = 'm_trade_'+today;
   var cnt = parseInt(localStorage.getItem(key)||'0') + 1;
@@ -2660,10 +2662,18 @@ function _execTrade(side, reason, price){
       var reward = Math.max(10, Math.floor(pnl * 10));
       _currency.botcoin = _currency.botcoin + reward;
       _gToast('🎉 익절 성공! 🪙 +' + reward + ' BOTCOIN', 'gold');
+      // 수익 달성 미션 연동 (하루 1회 SHARDS +3)
+      var _today = new Date().toDateString();
+      var _profitKey = 'm_profit_' + _today;
+      if(!localStorage.getItem(_profitKey)){
+        localStorage.setItem(_profitKey, '1');
+        _currency.shards = _currency.shards + 3;
+        setTimeout(function(){ _gToast('💎 +3 DATA SHARDS 획득! (수익 달성 미션)', 'mint'); }, 1800);
+      }
     } else {
       _gToast('🔴 매도 체결. ' + reason, 'coral');
     }
-    if(typeof checkTraideMission === 'function') checkTraideMission();
+    if(typeof checkTradeMission === 'function') checkTradeMission();
   } else {
     return false;
   }
@@ -3416,10 +3426,13 @@ window.addEventListener('load',function(){
       });
 
     } else if (type === 'premium') {
-      // 인앱결제 시뮬레이션
-      simulatePurchase(function(){
-        revive(1100000, '⚡ 부활권 사용! 110만원으로 부활!');
-      });
+      // BOTCOIN 500 소모 부활 (Toss Payments 연동 전까지)
+      if(_currency.botcoin < 500){
+        showToastLocal('🪙 BOTCOIN이 부족해요! (500개 필요)', 'coral');
+        return;
+      }
+      _currency.botcoin = _currency.botcoin - 500;
+      revive(1100000, '⚡ 🪙 500 소모 — 110만원으로 부활!');
     }
   };
 
@@ -3446,6 +3459,11 @@ window.addEventListener('load',function(){
     if (evalEl) evalEl.textContent = fmtKrw(newSeed);
     var pnlEl = document.getElementById('aPnl');
     if (pnlEl) { pnlEl.textContent = '+0.0%'; pnlEl.style.color = ''; }
+
+    // _portfolio 초기화 (포지션/평단가 리셋)
+    _portfolio = { cash: newSeed, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: newSeed };
+    if(typeof _savePortfolio === 'function') _savePortfolio();
+    if(typeof renderTradeLog === 'function') renderTradeLog();
   }
 
   // ── 광고 시뮬레이션 ──
