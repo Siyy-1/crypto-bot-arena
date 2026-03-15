@@ -2323,7 +2323,7 @@ function closeLaunch(){
   if(mybotEl) mybotEl.style.display = '';
   if(noBotEl) noBotEl.style.display = 'none';
   // 포트폴리오 초기화 (새 봇 출전)
-  _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000 };
+  _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
   _savePortfolio();
   renderTradeLog();
   resetBlocks();setFStep(1);goPage('arena');toast(`🎉 ${nm} 출전 완료!`);
@@ -2539,7 +2539,7 @@ var _botBlocks = { buy: [], sell: [] };
 
 // 가상 포트폴리오 (localStorage 복원)
 var _portfolio = (function(){
-  var def = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000 };
+  var def = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
   try {
     var saved = localStorage.getItem('portfolio_v1');
     if(saved){ var parsed = JSON.parse(saved); return Object.assign(def, parsed); }
@@ -2551,7 +2551,8 @@ function _savePortfolio(){
   try {
     localStorage.setItem('portfolio_v1', JSON.stringify({
       cash: _portfolio.cash, btc: _portfolio.btc, avgCost: _portfolio.avgCost,
-      trades: _portfolio.trades.slice(0, 20), lastTradeTs: _portfolio.lastTradeTs, seed: _portfolio.seed
+      trades: _portfolio.trades.slice(0, 20), lastTradeTs: _portfolio.lastTradeTs, seed: _portfolio.seed,
+      tzLastHour: _portfolio.tzLastHour !== undefined ? _portfolio.tzLastHour : -1
     }));
   } catch(e){}
 }
@@ -2635,14 +2636,20 @@ function _evalBlockCondition(blk, ind){
     case 'vol_sell':
       return false; // 거래량 데이터 별도 집계 필요 — Phase 2.1에서 구현
     case 'time_zone':
-      return ind.hour === parseInt(p.hr||'9');
+      var tgt = parseInt(p.hr||'9');
+      if(ind.hour === tgt && _portfolio.tzLastHour !== tgt){
+        _portfolio.tzLastHour = tgt;
+        _savePortfolio();
+        return true;
+      }
+      return false;
     default: return false;
   }
 }
 
 // ── 거래 실행 ──
 function _execTrade(side, reason, price){
-  var COOLDOWN = 5 * 60 * 1000; // 5분 쿨다운
+  var COOLDOWN = 1 * 60 * 1000; // 1분 쿨다운
   if(Date.now() - _portfolio.lastTradeTs < COOLDOWN) return false;
   var pnl = null;
 
@@ -3461,7 +3468,7 @@ window.addEventListener('load',function(){
     if (pnlEl) { pnlEl.textContent = '+0.0%'; pnlEl.style.color = ''; }
 
     // _portfolio 초기화 (포지션/평단가 리셋)
-    _portfolio = { cash: newSeed, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: newSeed };
+    _portfolio = { cash: newSeed, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: newSeed, tzLastHour: -1 };
     if(typeof _savePortfolio === 'function') _savePortfolio();
     if(typeof renderTradeLog === 'function') renderTradeLog();
   }
