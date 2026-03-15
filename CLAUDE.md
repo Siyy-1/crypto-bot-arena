@@ -49,13 +49,16 @@ Hosting  : Frontend → Vercel/GitHub Pages, Backend → Railway/Render
 - **캔들 차트(REST API)는 HTTPS 환경에서만 동작** — `file://`에서는 자동 비활성화되고 WebSocket 버퍼로 폴백
 - 전체 기능 테스트: GitHub Pages 배포 후 확인하거나 `npx serve .` 등 로컬 HTTPS 서버 사용
 
-### 배포
+### 배포 (자동화 완료)
 ```bash
-chmod +x deploy.sh && ./deploy.sh   # gh CLI 필요 (초기 세팅 포함)
-# 또는 수동 (이미 gh-pages 브랜치 존재 시):
-git add index.html && git commit -m "feat: 변경 내용" && git push origin gh-pages
+git add index.html
+git commit -m "feat: 변경 내용"
+git push origin main
+# → GitHub Actions가 gh-pages에 자동 배포 (약 1분)
 ```
+- 워크플로우: `.github/workflows/deploy.yml` → `main` push → `gh-pages` 자동 배포
 - 반영 시간: 30초~2분 / 라이브 URL: https://siyy-1.github.io/crypto-bot-arena/
+- Actions 실행 현황: https://github.com/siyy-1/crypto-bot-arena/actions
 
 ---
 
