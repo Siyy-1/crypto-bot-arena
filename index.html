@@ -757,6 +757,22 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .tl-pnl.neg{color:var(--coral);}
 .tl-ago{font-size:10px;color:var(--ink3);margin-top:2px;}
 
+/* ── Quick Start Sheet ── */
+.qs-sheet{position:fixed;inset:0;z-index:900;display:flex;align-items:flex-end;pointer-events:none;}
+.qs-sheet.show{pointer-events:all;background:rgba(0,0,0,.5);}
+.qs-card{width:100%;max-width:480px;margin:0 auto;background:var(--card);border-radius:var(--r) var(--r) 0 0;padding:24px 20px 32px;transform:translateY(100%);transition:transform .3s ease;}
+.qs-sheet.show .qs-card{transform:translateY(0);}
+.qs-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.qs-badge{font-size:11px;font-weight:900;color:var(--gold);background:rgba(255,184,48,.15);padding:4px 10px;border-radius:99px;letter-spacing:.5px;}
+.qs-x{background:none;border:none;font-size:20px;color:var(--ink3);cursor:pointer;padding:4px;line-height:1;}
+.qs-name{font-size:17px;font-weight:900;color:var(--ink);margin-bottom:4px;}
+.qs-desc{font-size:12px;color:var(--ink2);font-weight:600;margin-bottom:16px;}
+.qs-preview{background:var(--bg2);border-radius:10px;padding:12px 14px;margin-bottom:20px;}
+.qs-zone{font-size:12px;font-weight:700;color:var(--ink2);padding:5px 0;border-bottom:1px solid var(--bg);}
+.qs-zone:last-child{border:none;padding-bottom:0;}
+.qs-apply-btn{width:100%;padding:14px;background:var(--mint);color:#fff;font-size:14px;font-weight:900;border:none;border-radius:var(--r);cursor:pointer;margin-bottom:8px;box-shadow:0 4px 12px rgba(62,207,142,.3);}
+.qs-skip-btn{width:100%;padding:10px;background:none;color:var(--ink3);font-size:13px;font-weight:700;border:none;cursor:pointer;}
+
 </style>
 </head>
 <body>
@@ -1038,6 +1054,21 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   </div>
 </div>
 
+<!-- ── Quick Start Sheet ── -->
+<div id="qsSheet" class="qs-sheet">
+  <div class="qs-card">
+    <div class="qs-header">
+      <span class="qs-badge">⚡ 추천 조합</span>
+      <button class="qs-x" onclick="closeQuickStartSheet()">✕</button>
+    </div>
+    <div class="qs-name" id="qsName"></div>
+    <div class="qs-desc" id="qsDesc"></div>
+    <div class="qs-preview" id="qsPreview"></div>
+    <button class="qs-apply-btn" onclick="applyQuickStart()">이 조합으로 시작!</button>
+    <button class="qs-skip-btn" onclick="closeQuickStartSheet()">직접 구성할게요</button>
+  </div>
+</div>
+
 <!-- ════ MAP ════ -->
 <div class="page" id="page-map">
   <div class="ph">
@@ -1136,6 +1167,16 @@ const BDEFS = {
   macd_buy:   {l:'📡 추세 전환 신호 매수',z:'buy',isNew:true,p:[{k:'fast',u:'일 단기',d:'12',o:['8','12','15'],t:'단기 EMA',s:'MACD 단기선'},{k:'slow',u:'일 장기',d:'26',o:['20','26','30'],t:'장기 EMA',s:'MACD 장기선'}]},
   vol_sell:   {l:'📦 거래량 급증 매도',z:'sell',isNew:true,p:[{k:'vmul',u:'배 폭증 시',d:'3',o:['2','3','5','10'],t:'거래량 배수',s:'평균 대비 N배 폭증하면 매도'}]},
   time_zone:  {l:'⏰ 시간대 매수',z:'buy',isNew:true,    p:[{k:'hr',u:'시 매일',d:'09',o:['00','06','09','12','18','21'],t:'매수 시간',s:'매일 이 시간에 매수'}]},
+};
+
+// 캐릭터별 추천 블록 프리셋
+var QUICK_STARTS = {
+  rabbit: {name:'⚡ FLASH 스캘핑',  desc:'빠른 진입·빠른 익절 전략',    buy:['btc_drop','rsi_buy'],   sell:['profit_sell','stop_sell']},
+  goat:   {name:'🐐 GOAT 장기보유', desc:'과매도 진입 후 목표까지 대기', buy:['rsi_buy'],              sell:['profit_sell','stop_sell']},
+  bear:   {name:'🐻 GRIZZLY 수비형',desc:'손절 중심의 안전 운용',        buy:['rsi_buy'],              sell:['stop_sell','profit_sell']},
+  fox:    {name:'🦊 SLY 추세추종',  desc:'MACD 신호로 추세 잡기',        buy:['macd_buy'],             sell:['profit_sell','stop_sell']},
+  cat:    {name:'🐱 NYAN 퀀트',     desc:'RSI + BB 복합 신호 전략',      buy:['bband_buy','rsi_buy'],  sell:['profit_sell','stop_sell']},
+  otter:  {name:'🦦 RIPPLE 차익형', desc:'하락·BB 이탈 타이밍 포착',     buy:['btc_drop','bband_buy'], sell:['profit_sell','stop_sell']}
 };
 
 const TKRS=[{n:'BTC',p:'93,421,000',c:'+2.41%',d:'up'},{n:'ETH',p:'4,182,000',c:'+1.87%',d:'up'},{n:'SOL',p:'218,400',c:'-0.93%',d:'dn'},{n:'XRP',p:'892',c:'+4.22%',d:'up'},{n:'DOGE',p:'245',c:'-1.11%',d:'dn'},{n:'BNB',p:'618,000',c:'+0.82%',d:'up'},{n:'MATIC',p:'1,240',c:'+3.18%',d:'up'}];
@@ -2255,8 +2296,32 @@ function buildPalette(){
 }
 
 // ══════════ FACTORY STEPS ══════════
+// ── Quick Start Sheet 함수 ──
+function showQuickStartSheet(){
+  var preset = QUICK_STARTS[selC]; if(!preset) return;
+  document.getElementById('qsName').textContent = preset.name;
+  document.getElementById('qsDesc').textContent = preset.desc;
+  var bArr = preset.buy.map(function(k){ return BDEFS[k] ? BDEFS[k].l : k; });
+  var sArr = preset.sell.map(function(k){ return BDEFS[k] ? BDEFS[k].l : k; });
+  document.getElementById('qsPreview').innerHTML =
+    '<div class="qs-zone">🟢 매수: ' + bArr.join(' · ') + '</div>' +
+    '<div class="qs-zone">🔴 매도: ' + sArr.join(' · ') + '</div>';
+  document.getElementById('qsSheet').classList.add('show');
+}
+function closeQuickStartSheet(){
+  document.getElementById('qsSheet').classList.remove('show');
+}
+function applyQuickStart(){
+  var preset = QUICK_STARTS[selC]; if(!preset) return;
+  resetBlocks();
+  preset.buy.forEach(function(k){ addBlk('buy', k); });
+  preset.sell.forEach(function(k){ addBlk('sell', k); });
+  closeQuickStartSheet();
+  toast('⚡ 추천 블록 세트 적용!');
+}
+
 function fNext(){
-  if(fStep===1){const nm=document.getElementById('botNm').value||'내 봇';document.getElementById('lgAv').textContent=CHARS[selC].e;document.getElementById('lgNm').textContent=nm;buildPalette();resetBlocks();setFStep(2);}
+  if(fStep===1){const nm=document.getElementById('botNm').value||'내 봇';document.getElementById('lgAv').textContent=CHARS[selC].e;document.getElementById('lgNm').textContent=nm;buildPalette();resetBlocks();setFStep(2);showQuickStartSheet();}
   else if(fStep===2){buildConf();setFStep(3);}
   else launchBot();
 }
@@ -2637,6 +2702,30 @@ function _evalIndicators(){
 }
 
 // ── 블록 조건 평가 ──
+// 거래 이유 문자열 생성 (지표값 포함)
+function _buildTradeReason(blk, ind){
+  switch(blk.key){
+    case 'btc_drop':
+      return blk.label + ' (−' + Math.abs(ind.drop * 100).toFixed(1) + '%)';
+    case 'rsi_buy':
+      return blk.label + ' (RSI ' + (ind.rsi14 !== null ? Math.round(ind.rsi14) : '-') + ')';
+    case 'profit_sell':
+      var _pp = _portfolio.avgCost > 0 ? (ind.price / _portfolio.avgCost - 1) * 100 : 0;
+      return blk.label + ' (+' + _pp.toFixed(1) + '%)';
+    case 'stop_sell':
+      var _sp = _portfolio.avgCost > 0 ? (ind.price / _portfolio.avgCost - 1) * 100 : 0;
+      return blk.label + ' (' + _sp.toFixed(1) + '%)';
+    case 'bband_buy':
+      return blk.label + ' (BB 하단 터치)';
+    case 'macd_buy':
+      return blk.label + ' (MACD ' + (ind.macd && ind.macd.hist > 0 ? '+' : '') + (ind.macd ? Math.round(ind.macd.hist) : '0') + ')';
+    case 'time_zone':
+      return blk.label + ' (' + ind.hour + '시)';
+    default:
+      return blk.label + ' 조건 충족';
+  }
+}
+
 function _evalBlockCondition(blk, ind){
   if(!ind) return false;
   var p = blk.params;
@@ -2713,6 +2802,15 @@ function _execTrade(side, reason, price){
   _savePortfolio();
   renderTradeLog();
   renderMapStats();
+  // 전체 통산 첫 거래 축하
+  var _prevTotal = _store.safeInt('total_trades_ever', 0);
+  _store.setItem('total_trades_ever', _prevTotal + 1);
+  if(_prevTotal === 0){
+    setTimeout(function(){
+      _gToast('🎊 첫 체결 성공! 봇이 살아있어요! 🪙 +50', 'gold');
+      _currency.botcoin = _currency.botcoin + 50;
+    }, 700);
+  }
   return true;
 }
 
@@ -3264,14 +3362,14 @@ window.addEventListener('load',function(){
         if(!hasBtc){
           for(var i = 0; i < _botBlocks.buy.length; i++){
             if(_evalBlockCondition(_botBlocks.buy[i], ind)){
-              _execTrade('buy', _botBlocks.buy[i].label + ' 조건 충족', price);
+              _execTrade('buy', _buildTradeReason(_botBlocks.buy[i], ind), price);
               break;
             }
           }
         } else {
           for(var j = 0; j < _botBlocks.sell.length; j++){
             if(_evalBlockCondition(_botBlocks.sell[j], ind)){
-              _execTrade('sell', _botBlocks.sell[j].label + ' 조건 충족', price);
+              _execTrade('sell', _buildTradeReason(_botBlocks.sell[j], ind), price);
               break;
             }
           }
