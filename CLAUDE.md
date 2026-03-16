@@ -11,7 +11,7 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 1.5 (핫픽스 완료) → Phase 2 준비 진행 중 |
+| **현재 버전** | Phase 2 진행 중 (2.12·2.13 완료, 차트·통계 안정화) |
 | **PRD 버전** | v4.0 (Lion PM, 2026-03-15) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일, Upbit WebSocket + REST API, GitHub Pages |
 | **개발자** | 시윤 (1인 솔로 개발) |
@@ -23,7 +23,7 @@
 ## 2. 기술 스택 & 아키텍처
 
 ### 현재 (Phase 1.5)
-- **단일 파일**: `index.html` (~4100줄) — CSS + HTML + JS 모두 포함
+- **단일 파일**: `index.html` (~4500줄) — CSS + HTML + JS 모두 포함
 - **실시간 시세**: Upbit WebSocket (`wss://api.upbit.com/websocket/v1`)
 - **캔들 차트**: Upbit REST API (`https://api.upbit.com/v1/candles/...`) — HTTPS 환경에서만 동작
 - **데이터 저장**: `localStorage` (봇 설정, 진행 상태, 재화)
@@ -111,29 +111,38 @@ git push origin main
 
 ### 핵심 전역
 ```js
-selC          // 현재 선택된 캐릭터 키 ('rabbit'|'goat'|'bear'|'fox'|'cat'|'otter')
-fStep         // 팩토리 현재 단계 (1|2|3)
-curPage       // 현재 활성 페이지 ('arena'|'factory'|'map')
-_candleCache  // tf별 캔들 데이터 캐시 { '240': {data, ts, yMin, yMax} }
-_wsBuffer     // WebSocket 실시간 BTC 가격 누적 배열 (최대 120개)
-_store        // localStorage 안전 헬퍼 (SecurityError 방어) — 실패 시 _store._mem 인메모리 폴백 (세션 범위)
-_currency     // BOTCOIN/SHARDS 재화 상태
+selC           // 현재 선택된 캐릭터 키 ('rabbit'|'goat'|'bear'|'fox'|'cat'|'otter')
+fStep          // 팩토리 현재 단계 (1|2|3)
+curPage        // 현재 활성 페이지 ('arena'|'factory'|'map')
+_candleCache   // tf별 캔들 데이터 캐시 { '240': {data, ts, yMin, yMax} }
+_wsBuffer      // WebSocket 실시간 BTC 가격 누적 배열 (최대 120개)
+_store         // localStorage 안전 헬퍼 (SecurityError 방어) — 실패 시 _store._mem 인메모리 폴백 (세션 범위)
+_currency      // BOTCOIN/SHARDS 재화 상태
+_botBlocks     // 현재 봇 블록 상태 { buy: [{id, key, label, params}], sell: [...] }
+_portfolio     // 가상 포트폴리오 { cash, btc, avgCost, trades, lastTradeTs, seed, tzLastHour }
+_chartFetching // 차트 REST fetch 진행 중 여부 (중복 호출 방지 플래그)
+_chartRetry    // 차트 재시도 상태 { n: 횟수, tid: 타이머ID } — 지수 백오프 관리
 ```
 
 ### 핵심 함수
 ```js
-goPage(pg)              // 페이지 전환 ('arena'|'factory'|'map')
-toast(msg)              // 토스트 알림
-_gToast(msg, type)      // IIFE 외부에서 호출 가능한 토스트 (전역)
-buildPalette()          // 블록 팔레트 렌더링 (캐릭터 어피니티 적용)
-addBlk(zone, dk)        // 블록 추가 ('buy'|'sell', blockDefKey)
-drawChart()             // 캔들 차트 렌더링 (REST API 호출)
-renderChartFromData()   // 캔들 데이터로 차트 그리기
-openShareCard()         // 결과 공유 카드 열기
-startRemyTut()          // REMY 튜토리얼 시작
-startTut()              // 슬라이드 튜토리얼 시작
-_store.safeInt(k, fb)   // localStorage에서 NaN 안전 정수 읽기
-getWeekKey()            // ISO 8601 주차 키 반환 (예: '2026w11')
+goPage(pg)                    // 페이지 전환 ('arena'|'factory'|'map')
+toast(msg)                    // 토스트 알림
+_gToast(msg, type)            // IIFE 외부에서 호출 가능한 토스트 (전역)
+buildPalette()                // 블록 팔레트 렌더링 (캐릭터 어피니티 적용)
+addBlk(zone, dk)              // 블록 추가 ('buy'|'sell', blockDefKey)
+drawChart()                   // 캔들 차트 렌더링 (REST API, stale 캐시 우선, 지수 백오프 재시도)
+renderChartFromData()         // 캔들 데이터로 차트 그리기
+openShareCard()               // 결과 공유 카드 열기
+startRemyTut()                // REMY 튜토리얼 시작
+startTut()                    // 슬라이드 튜토리얼 시작
+_store.safeInt(k, fb)         // localStorage에서 NaN 안전 정수 읽기
+getWeekKey()                  // ISO 8601 주차 키 반환 (예: '2026w11')
+_evalIndicators()             // RSI-14, 볼린저밴드-20, MACD, 현재 시간 등 지표 계산 → {price, drop, rsi14, bb20, macd, hour}
+_evalBlockCondition(blk, ind) // 블록 조건 평가 → true/false (8가지 블록 타입)
+_execTrade(side, reason, px)  // 가상 매수/매도 실행 (1분 쿨다운, BOTCOIN 보상, 미션 연동)
+renderTradeLog()              // 최근 5개 거래 내역 #tradeLog에 렌더링
+renderMapStats()              // 실전맵 통계(거래 횟수/승률/오늘 수익/순위) 실시간 업데이트
 ```
 
 ---
@@ -142,7 +151,7 @@ getWeekKey()            // ISO 8601 주차 키 반환 (예: '2026w11')
 
 ```
 crypto-bot-arena/
-├── index.html          ← 메인 앱 (단일 파일, ~4100줄)
+├── index.html          ← 메인 앱 (단일 파일, ~4500줄)
 ├── characters.html     ← 캐릭터 시트 (디자인 바이블)
 ├── gameover.html       ← 파산 화면 데모
 ├── hub.html            ← 데모 허브
@@ -222,8 +231,23 @@ Ctrl+Shift+R
 **진단**: `el.parentElement`로 실제 부모 탐색, div 카운트 검증
 
 ### ⑤ canvas Retina 흐림
-**증상**: HiDPI 디스플레이에서 공유 카드가 흐리게 렌더  
+**증상**: HiDPI 디스플레이에서 공유 카드가 흐리게 렌더
 **해결**: `devicePixelRatio` 스케일링 적용, `ctx.scale(dpr, dpr)`
+
+### ⑥ time_zone 블록 중복 발동
+**증상**: 9시에 설정한 블록이 9시 내내 1분마다 반복 발동
+**원인**: `ind.hour === tgt` 조건이 해당 시간 동안 계속 true
+**해결**: `_portfolio.tzLastHour` 필드 추가. 발동 시 `tzLastHour = tgt` 저장, 재발동 조건에 `tzLastHour !== tgt` 체크
+**초기화**: `_portfolio` IIFE / `closeLaunch()` / `revive()` 3곳 모두 `tzLastHour: -1` 포함
+
+### ⑦ 차트 깜빡임 (시세 로드 실패 반복)
+**증상**: 실전맵 차트가 "시세 로드 실패 — 재시도 중..." ↔ "시세 불러오는 중..." 를 3초마다 반복
+**원인**: 실패 시 `setTimeout(drawChart, 3000)` 무한 중첩 + 매 재시도마다 캔버스를 로딩 화면으로 덮어씀
+**해결**:
+- `_chartFetching` 플래그로 동시 fetch 차단
+- `_chartRetry.tid` 단일 타이머로 중첩 방지 (새 호출 시 기존 타이머 취소)
+- stale 캐시 있으면 에러 화면 대신 기존 차트 유지 + 백그라운드 재시도
+- 지수 백오프: 5s → 10s → 20s → 30s(max), 최대 8회 후 포기
 
 ---
 
@@ -250,6 +274,10 @@ Ctrl+Shift+R
 | B4 | WebSocket exponential backoff | 1s→2s→4s→8s→15s→30s + offline 배너 | ✅ |
 | B6 | Chart data cap | tf별 슬라이딩 윈도우 (4H: 150개, 1D: 120개 등) | ✅ |
 | P1 | Chart render throttle | rAF + 250ms 최소 간격 게이팅 | ✅ |
+| B7 | time_zone 블록 중복 발동 | `tzLastHour` 필드로 시간당 1회만 발동 | ✅ |
+| B8 | 차트 깜빡임 안정화 | `_chartFetching` + 지수 백오프 + stale 캐시 우선 표시 | ✅ |
+| U8 | 거래 쿨다운 단축 | 5분 → 1분 (세션 8분 목표 대응) | ✅ |
+| U9 | 맵 통계 실제 데이터 연동 | 거래 횟수/승률/오늘 수익/순위 `_portfolio` 기반 실시간 반영 | ✅ |
 
 ---
 
@@ -273,8 +301,8 @@ Ctrl+Shift+R
 | # | 작업 | 상태 |
 |---|------|------|
 | 2.11 | Real leaderboard (서버 집계) | ⬜ 미착수 |
-| 2.12 | BOTCOIN/SHARDS 실제 경제 | ⬜ 미착수 |
-| 2.13 | Game loop: Action-Result-Reward | ⬜ 미착수 (최우선 P0) |
+| 2.12 | BOTCOIN/SHARDS 실제 경제 | ✅ 완료 |
+| 2.13 | Game loop: Action-Result-Reward | ✅ 완료 |
 | 2.14 | Enhanced chart (U6) | ⬜ 미착수 |
 | 2.15 | Onboarding flow (U4) | ⬜ 미착수 |
 
@@ -316,11 +344,11 @@ Ctrl+Shift+R
 
 ### 파일 배포 방법
 ```bash
-# GitHub Pages 배포 — gh-pages 브랜치에 index.html 푸시
+# GitHub Pages 배포 — main 브랜치에 push하면 GitHub Actions가 gh-pages에 자동 배포
 git add index.html
 git commit -m "feat: [변경 내용]"
-git push origin gh-pages
-# 약 30초~2분 후 라이브 반영
+git push origin main
+# → .github/workflows/deploy.yml 실행 → gh-pages 자동 배포 (약 1분)
 ```
 
 ### Chrome MCP 활용 패턴
@@ -349,4 +377,4 @@ window.addBlk.toString() → 래핑 순서 파악
 
 ---
 
-*최종 업데이트: 2026-03-15 | 작업자: 시윤 + Claude*
+*최종 업데이트: 2026-03-16 | 작업자: 시윤 + Claude*
