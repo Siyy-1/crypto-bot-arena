@@ -1450,6 +1450,8 @@ function startPnl(){setInterval(()=>{const el=document.getElementById('aPnl');co
 // 캔들 데이터 캐시 — tf별 독립 저장 (WebSocket 덮어씀 방지)
 let _candleCache = {}; // { '60': {data:[...], ts:12345}, 'D': {...}, ... }
 let _wsBuffer = [];    // WebSocket 실시간 누적 (REST 없을 때 fallback용)
+var _chartFetching = false;           // 동시 fetch 방지 플래그
+var _chartRetry = { n: 0, tid: null }; // 재시도 상태 (횟수 + 타이머 ID)
 
 function renderChartFromData(raw, cv, skipMarkers, fixedYMin, fixedYMax){
   if(!cv||!raw||!raw.length)return;
@@ -1605,37 +1607,46 @@ async function drawChart(){
   const cv=document.getElementById('chCv');
   if(!cv)return;
 
-  // 시간프레임 확인
+  // ① 대기 중인 재시도 타이머 취소 (중첩 방지)
+  if(_chartRetry.tid){ clearTimeout(_chartRetry.tid); _chartRetry.tid=null; }
+
+  // ② 이미 fetch 중이면 스킵 (중복 호출 방지)
+  if(_chartFetching) return;
+
   const activeTf=document.querySelector('.tf.active')?.dataset?.tf||'240';
   const tfMap={'1':'minutes/1','5':'minutes/5','15':'minutes/15','60':'minutes/60','240':'minutes/240','D':'days','W':'weeks'};
   const endpoint=tfMap[activeTf]||'minutes/240';
   const count=activeTf==='W'?13:activeTf==='60'?48:60;
   const now=Date.now();
 
-  // tf별 캐시 유효 (60초) 이면 재사용
+  // ③ 유효 캐시 (60초 이내) → 즉시 렌더
   const cached=_candleCache[activeTf];
   if(cached && cached.data && (now-cached.ts)<60000){
     renderChartFromData(cached.data,cv,false,cached.yMin,cached.yMax); return;
   }
 
-  // 로딩 표시
-  const ctx=cv.getContext('2d');
-  const W=cv.offsetWidth||340,H=155;
-  cv.width=W;cv.height=H;
-  ctx.fillStyle='rgba(62,207,142,.08)';
-  ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#aaa';ctx.font='12px sans-serif';ctx.textAlign='center';
-  ctx.fillText('시세 불러오는 중...', W/2, H/2);
+  // ④ Stale 캐시가 있으면 먼저 표시 (로딩 화면 생략 → 깜빡임 방지)
+  const hasStale=cached && cached.data && cached.data.length>0;
+  if(hasStale){
+    renderChartFromData(cached.data,cv,false,cached.yMin,cached.yMax);
+  } else {
+    // 캐시 없을 때만 로딩 표시
+    const ctx=cv.getContext('2d');
+    const W=cv.offsetWidth||340,H=155;
+    cv.width=W;cv.height=H;
+    ctx.fillStyle='rgba(62,207,142,.08)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#aaa';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('시세 불러오는 중...', W/2, H/2);
+  }
 
   // ── CORS 대응: file://환경에선 REST fetch 대신 WebSocket 누적 데이터 사용 ──
-  // GitHub Pages 배포 후엔 REST가 자동으로 활성화됨
-  const isHttps = location.protocol === 'https:';
+  const isHttps=location.protocol==='https:';
   if(isHttps){
-    // HTTPS 환경 (GitHub Pages 등) → REST API로 실제 캔들 fetch
+    _chartFetching=true;
     try{
       const url=`https://api.upbit.com/v1/candles/${endpoint}?market=KRW-BTC&count=${count}`;
       const res=await fetch(url);
-      if(!res.ok) throw new Error('fetch fail');
+      if(!res.ok) throw new Error('fetch fail '+res.status);
       const candles=await res.json();
       const raw=candles.reverse().map(c=>({
         o:c.opening_price, h:c.high_price, l:c.low_price, c:c.trade_price,
@@ -1644,6 +1655,7 @@ async function drawChart(){
       const _yMn=Math.min(...raw.map(c=>c.l)), _yMx=Math.max(...raw.map(c=>c.h));
       const _yPad=(_yMx-_yMn)*(activeTf==='W'?0.05:0.08)||1;
       _candleCache[activeTf]={data:raw, ts:Date.now(), yMin:_yMn-_yPad, yMax:_yMx+_yPad};
+      _chartRetry.n=0; // 성공 시 재시도 카운트 리셋
       renderChartFromData(raw,cv);
       const last=candles[candles.length-1];
       const first=candles[0];
@@ -1654,25 +1666,32 @@ async function drawChart(){
         if(px2){px2.textContent=Math.round(last.trade_price).toLocaleString();px2.className='chart-px '+(rate>=0?'pos':'neg');}
         if(chg2){const s=rate>=0;chg2.textContent=(s?'▲ +':'▼ ')+(rate*100).toFixed(2)+'%';chg2.className='chart-ch '+(s?'pos':'neg');}
       }
-      return;
     }catch(e){
-      // REST 실패 시 wsBuffer로 대체하지 않음 (계단 현상 방지)
-      // 에러 메시지 표시 후 3초 후 재시도
-      const ctx2=cv.getContext('2d');
-      ctx2.clearRect(0,0,cv.width,cv.height);
-      ctx2.fillStyle='rgba(255,107,107,.08)';ctx2.fillRect(0,0,cv.width,cv.height);
-      ctx2.fillStyle='#ff6b6b';ctx2.font='11px sans-serif';ctx2.textAlign='center';
-      ctx2.fillText('시세 로드 실패 — 재시도 중...', cv.width/2, cv.height/2);
-      setTimeout(()=>{ if(document.getElementById('chCv')) drawChart(); }, 3000);
-      return;
+      _chartRetry.n++;
+      var MAX_RETRY=8;
+      if(_chartRetry.n<=MAX_RETRY){
+        // 지수 백오프: 5s→10s→20s→30s(max)
+        var delay=Math.min(5000*Math.pow(2,_chartRetry.n-1),30000);
+        if(!hasStale){
+          // stale 캐시 없을 때만 에러 메시지 (있으면 기존 차트 그대로 유지)
+          const ctx2=cv.getContext('2d');
+          ctx2.clearRect(0,0,cv.width,cv.height);
+          ctx2.fillStyle='rgba(255,107,107,.08)';ctx2.fillRect(0,0,cv.width,cv.height);
+          ctx2.fillStyle='#ff6b6b';ctx2.font='11px sans-serif';ctx2.textAlign='center';
+          ctx2.fillText('시세 로드 실패 — 재시도 중...', cv.width/2, cv.height/2);
+        }
+        _chartRetry.tid=setTimeout(function(){ if(document.getElementById('chCv')) drawChart(); }, delay);
+      }
+      // MAX_RETRY 초과 시 조용히 포기 (stale 차트 유지 or 에러 화면 고정)
+    }finally{
+      _chartFetching=false;
     }
+    return;
   }
   // file:// 환경 → WebSocket 누적 버퍼 or 목업 fallback
-  if(_wsBuffer.length > 1){
-    // WebSocket이 이미 가격을 누적한 경우
-    renderChartFromData(_wsBuffer, cv);
+  if(_wsBuffer.length>1){
+    renderChartFromData(_wsBuffer,cv);
   } else {
-    // 아직 WebSocket 데이터 없음 → 목업으로 시작 (OHLC)
     const raw=[];let v=93000000;
     for(let i=0;i<60;i++){
       const chg=(Math.random()-.48)*500000;
@@ -1690,6 +1709,9 @@ async function drawChart(){
 function setTf(el){
   document.querySelectorAll('.tf').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
+  // 재시도 카운트 리셋 (사용자 수동 tf 변경 = 새 시도)
+  _chartRetry.n=0;
+  if(_chartRetry.tid){ clearTimeout(_chartRetry.tid); _chartRetry.tid=null; }
   // 해당 tf 캐시 무효화 → 무조건 새로 fetch
   const tf=el.dataset.tf;
   if(tf && _candleCache[tf]) _candleCache[tf].ts=0;
