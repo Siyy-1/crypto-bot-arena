@@ -1063,9 +1063,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   </div>
   <div class="t-stats">
     <div class="ts"><div class="ts-v pos" id="weeklyPnl">+0.0%</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">주간 수익</div></div>
-    <div class="ts"><div class="ts-v sky">47</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">거래 횟수</div></div>
-    <div class="ts"><div class="ts-v gd">74%</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">승률</div></div>
-    <div class="ts"><div class="ts-v pos">+2.1%</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">오늘 수익</div></div>
+    <div class="ts"><div class="ts-v sky" id="mapTradeCnt">0회</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">거래 횟수</div></div>
+    <div class="ts"><div class="ts-v gd" id="mapWinRate">—</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">승률</div></div>
+    <div class="ts"><div class="ts-v" id="mapTodayPnl">+0.0%</div><div style="font-size:9px;font-weight:800;color:var(--ink3);margin-top:3px;">오늘 수익</div></div>
   </div>
   <div class="sec-l">거래 로그</div>
   <div class="log-feed" id="logFeed" style="max-height:340px;overflow:hidden;position:relative;"></div>
@@ -1321,7 +1321,7 @@ function goPage(pg){
   const ni=document.getElementById('ni-'+pg);if(ni)ni.classList.add('active');
   document.getElementById('fabBtn').classList.toggle('active',pg==='factory');
   if(pg==='factory'){document.getElementById('fCta').classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
-  if(pg==='map'){drawChart();window.scrollTo({top:0,behavior:'smooth'});}
+  if(pg==='map'){drawChart();renderMapStats();window.scrollTo({top:0,behavior:'smooth'});}
   if(pg==='arena')window.scrollTo({top:0,behavior:'smooth'});
 }
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
@@ -1444,7 +1444,6 @@ function startCd(){
   },1000);
 }
 
-function startPnl(){setInterval(()=>{const el=document.getElementById('aPnl');const v=(12.4+(Math.random()-.5)*.25).toFixed(1);el.textContent=`+${v}%`;},4000);}
 
 // ══════════ CHART ══════════
 // 캔들 데이터 캐시 — tf별 독립 저장 (WebSocket 덮어씀 방지)
@@ -2348,6 +2347,7 @@ function closeLaunch(){
   _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
   _savePortfolio();
   renderTradeLog();
+  renderMapStats();
   resetBlocks();setFStep(1);goPage('arena');toast(`🎉 ${nm} 출전 완료!`);
 }
 
@@ -2712,10 +2712,58 @@ function _execTrade(side, reason, price){
   if(_portfolio.trades.length > 20) _portfolio.trades.pop();
   _savePortfolio();
   renderTradeLog();
+  renderMapStats();
   return true;
 }
 
 // ── 거래 로그 렌더링 ──
+function renderMapStats(){
+  var sells = _portfolio.trades.filter(function(t){ return t.side === 'sell'; });
+  var wins  = sells.filter(function(t){ return t.pnl > 0; });
+
+  // 거래 횟수
+  var cntEl = document.getElementById('mapTradeCnt');
+  if(cntEl) cntEl.textContent = _portfolio.trades.length + '회';
+
+  // 승률
+  var wrEl = document.getElementById('mapWinRate');
+  if(wrEl){
+    if(sells.length === 0){ wrEl.textContent = '—'; wrEl.className = 'ts-v gd'; }
+    else {
+      var wr = Math.round(wins.length / sells.length * 100);
+      wrEl.textContent = wr + '%';
+      wrEl.className = 'ts-v ' + (wr >= 50 ? 'gd' : 'neg');
+    }
+  }
+
+  // 오늘 수익 (오늘 매도 체결 PnL 합 / seed)
+  var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  var todaySells = sells.filter(function(t){ return t.ts >= todayStart.getTime(); });
+  var todayPnlSum = todaySells.reduce(function(acc, t){ return acc + (t.pnl || 0); }, 0);
+  var todayRet = _portfolio.seed > 0 ? (todayPnlSum / _portfolio.seed * 100) : 0;
+  var todayEl = document.getElementById('mapTodayPnl');
+  if(todayEl){
+    todayEl.textContent = (todayRet >= 0 ? '+' : '') + todayRet.toFixed(1) + '%';
+    todayEl.className = 'ts-v ' + (todayRet >= 0 ? 'pos' : 'neg');
+  }
+
+  // 순위 계산: 내 PnL% 대비 LB 더미 유저와 비교
+  var pnlText = (document.getElementById('aPnl')||{}).textContent || '+0.0%';
+  var myPnlNum = parseFloat(pnlText.replace('%','').replace('+','')) || 0;
+  var lbPnls = [38.7, 31.2, 28.9, 25.3, 22.7];
+  var myRank = lbPnls.filter(function(p){ return p > myPnlNum; }).length + 1;
+
+  // #aRk 순위 뱃지 업데이트
+  var rkEl = document.getElementById('aRk');
+  if(rkEl) rkEl.textContent = myRank;
+
+  // 리더보드 내 봇 행 업데이트 (렌더링 후 DOM에 있을 때만)
+  var lbMePnl = document.querySelector('.lb-row.me .lb-pnl');
+  if(lbMePnl){ lbMePnl.textContent = pnlText; lbMePnl.className = 'lb-pnl ' + (myPnlNum >= 0 ? 'pos' : 'neg'); }
+  var lbMeRk = document.querySelector('.lb-row.me .lb-rk');
+  if(lbMeRk) lbMeRk.textContent = myRank;
+}
+
 function renderTradeLog(){
   var el = document.getElementById('tradeLog');
   if(!el) return;
@@ -2779,7 +2827,7 @@ function checkLogMore(){
 const _origGoPage = window.goPage;
 window.goPage = function(pg){
   _origGoPage && _origGoPage(pg);
-  if(pg==='map') { renderMapBotTab(); drawChart(); }
+  if(pg==='map') { renderMapBotTab(); drawChart(); renderMapStats(); }
 };
 renderMapBotTab(); // 초기 렌더
 
