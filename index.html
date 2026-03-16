@@ -1321,7 +1321,7 @@ function goPage(pg){
   const ni=document.getElementById('ni-'+pg);if(ni)ni.classList.add('active');
   document.getElementById('fabBtn').classList.toggle('active',pg==='factory');
   if(pg==='factory'){document.getElementById('fCta').classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
-  if(pg==='map'){drawChart();renderMapStats();window.scrollTo({top:0,behavior:'smooth'});}
+  if(pg==='map'){_chartRetry.n=0;drawChart();renderMapStats();window.scrollTo({top:0,behavior:'smooth'});}
   if(pg==='arena')window.scrollTo({top:0,behavior:'smooth'});
 }
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
@@ -1628,8 +1628,8 @@ async function drawChart(){
   const hasStale=cached && cached.data && cached.data.length>0;
   if(hasStale){
     renderChartFromData(cached.data,cv,false,cached.yMin,cached.yMax);
-  } else {
-    // 캐시 없을 때만 로딩 표시
+  } else if(_chartRetry.n === 0) {
+    // 첫 시도일 때만 로딩 표시 (재시도 시에는 에러 화면 유지 → 깜빡임 방지)
     const ctx=cv.getContext('2d');
     const W=cv.offsetWidth||340,H=155;
     cv.width=W;cv.height=H;
