@@ -524,7 +524,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .chart-px.pos{color:var(--mint);}
 .chart-ch{font-size:11px;font-weight:700;text-align:right;margin-top:1px;}
 .chart-ch.pos{color:var(--mint);}
-.chart-w{height:155px;position:relative;}
+.chart-w{height:212px;position:relative;}
 .chart-cv{width:100%;height:100%;display:block;}
 .chart-tf{display:flex;gap:6px;margin-top:10px;}
 .tf{flex:1;padding:6px 0;text-align:center;font-family:var(--fm);font-size:10px;font-weight:700;color:var(--ink3);border-radius:8px;cursor:pointer;transition:all .2s;background:var(--bg2);box-shadow:var(--neu-sm);}
@@ -787,6 +787,22 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .login-btn.google{background:#fff;color:#333;border:1.5px solid #ddd;}
 .login-skip{font-size:12px;color:var(--ink3);cursor:pointer;text-decoration:underline;margin-top:4px;}
 
+/* ── 설정 모달 ── */
+#settingsModal{position:fixed;inset:0;z-index:9000;display:none;background:rgba(20,16,12,.88);
+  backdrop-filter:blur(12px);align-items:center;justify-content:center;}
+#settingsModal.show{display:flex;}
+.set-card{background:var(--card);border-radius:24px;padding:28px 24px;max-width:320px;width:90%;box-shadow:var(--neu-out);}
+.set-title{font-weight:900;font-size:18px;text-align:center;margin-bottom:20px;}
+.set-row{margin-bottom:16px;}
+.set-lbl{font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:6px;}
+.set-input{width:100%;box-sizing:border-box;padding:11px 14px;border-radius:12px;border:2px solid var(--bg2);
+  background:var(--bg2);font-size:15px;font-weight:700;font-family:var(--fm);outline:none;}
+.set-input:focus{border-color:var(--mint);}
+.set-save{width:100%;padding:13px;border-radius:14px;font-size:15px;font-weight:800;
+  background:var(--mint);color:#fff;border:none;cursor:pointer;margin-bottom:10px;}
+.set-logout{text-align:center;font-size:12px;color:var(--coral);cursor:pointer;margin-bottom:6px;}
+.set-close{text-align:center;font-size:12px;color:var(--ink3);cursor:pointer;text-decoration:underline;}
+
 </style>
 </head>
 <body>
@@ -825,6 +841,20 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   <div class="currency-item ds">💎 <span id="shardsAmt">0</span></div>
 </div>
 
+<!-- ── 설정 모달 ── -->
+<div id="settingsModal">
+  <div class="set-card">
+    <div class="set-title">⚙️ 설정</div>
+    <div class="set-row">
+      <div class="set-lbl">닉네임</div>
+      <input id="nickInput" class="set-input" type="text" maxlength="12" placeholder="닉네임 입력">
+    </div>
+    <button class="set-save" onclick="saveNickname()">저장하기</button>
+    <div class="set-logout" onclick="logoutUser()">로그아웃</div>
+    <div class="set-close" onclick="closeSettings()">닫기</div>
+  </div>
+</div>
+
 <!-- ── 로그인 모달 ── -->
 <div id="loginModal">
   <div class="login-card">
@@ -841,7 +871,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 <div class="page active" id="page-arena">
   <div class="ph" style="display:flex;align-items:center;justify-content:space-between;">
     <div class="pt">봇 <span>아레나</span> 🏟️</div>
-    <div class="ha"><div class="ib nd" onclick="startTut()">❓</div><div class="ib">⚙️</div></div>
+    <div class="ha"><div class="ib nd" onclick="startTut()">❓</div><div class="ib" onclick="openSettings()">⚙️</div></div>
   </div>
   <!-- ══ SEASON CARD ══ -->
   <div class="season-wrap" onclick="openSeasonSheet()">
@@ -1522,10 +1552,11 @@ var _chartRetry = { n: 0, tid: null }; // 재시도 상태 (횟수 + 타이머 I
 function renderChartFromData(raw, cv, skipMarkers, fixedYMin, fixedYMax){
   if(!cv||!raw||!raw.length)return;
   const ctx=cv.getContext('2d');
-  const W=cv.offsetWidth||cv.parentElement?.offsetWidth||340, H=170;
+  const W=cv.offsetWidth||cv.parentElement?.offsetWidth||340;
+  const MAIN_H=158, RSI_Y=163, RSI_H=57, H=RSI_Y+RSI_H;
   cv.width=W; cv.height=H;
   const PAD_T=12, PAD_B=20, PAD_L=6, PAD_R=6;
-  const chartW=W-PAD_L-PAD_R, chartH=H-PAD_T-PAD_B;
+  const chartW=W-PAD_L-PAD_R, chartH=MAIN_H-PAD_T-PAD_B;
 
   // OHLC 또는 레거시 숫자 배열 모두 처리
   const isOhlc = raw[0]&&typeof raw[0]==='object'&&'o' in raw[0];
@@ -1590,7 +1621,7 @@ function renderChartFromData(raw, cv, skipMarkers, fixedYMin, fixedYMax){
       const d=new Date(c.t.replace(' ','T'));
       lbl=`${d.getMonth()+1}/${d.getDate()}`;
     }
-    if(lbl) ctx.fillText(lbl,x,H-4);
+    if(lbl) ctx.fillText(lbl,x,MAIN_H-4);
   });
   // B/S 마커 (시뮬 포지션) — skipMarkers=true이면 생략 (실시간 업데이트 시 깜빡임 방지)
   if(!skipMarkers){
@@ -1662,11 +1693,75 @@ function renderChartFromData(raw, cv, skipMarkers, fixedYMin, fixedYMax){
       ctx.restore();
     });
   }
-  // 현재가 점
-  ctx.beginPath();ctx.arc(py(raw.length-1),px(raw[raw.length-1]),5,0,Math.PI*2);
-  ctx.fillStyle=lineColor;
-  ctx.shadowBlur=8;ctx.shadowColor=lineColor;
-  ctx.fill();ctx.shadowBlur=0;
+  // ── 볼린저 밴드 오버레이 ──
+  if(isOhlc && n >= 20){
+    const closes=ohlc.map(c=>c.c);
+    const BB_P=20;
+    const bbSeries=ohlc.map((_,i)=>{
+      if(i<BB_P-1)return null;
+      const sl=closes.slice(i-BB_P+1,i+1);
+      const mean=sl.reduce((a,b)=>a+b,0)/BB_P;
+      const std=Math.sqrt(sl.reduce((a,b)=>a+Math.pow(b-mean,2),0)/BB_P);
+      return{upper:mean+2*std,mid:mean,lower:mean-2*std};
+    });
+    // 밴드 사이 채우기
+    const fi=bbSeries.findIndex(b=>b!==null);
+    if(fi>=0){
+      ctx.save();ctx.globalAlpha=0.07;ctx.fillStyle='#60a5fa';
+      ctx.beginPath();
+      ctx.moveTo(offsetX+fi*slotW+candleW/2, py(bbSeries[fi].upper));
+      bbSeries.forEach((b,i)=>{ if(b) ctx.lineTo(offsetX+i*slotW+candleW/2, py(b.upper)); });
+      for(let i=n-1;i>=0;i--){ if(bbSeries[i]) ctx.lineTo(offsetX+i*slotW+candleW/2, py(bbSeries[i].lower)); }
+      ctx.closePath();ctx.fill();ctx.restore();
+    }
+    // BB 선 그리기
+    [[bbSeries.map(b=>b?b.upper:null),'#60a5fa',null],
+     [bbSeries.map(b=>b?b.mid:null),'#aaaaaa',[3,3]],
+     [bbSeries.map(b=>b?b.lower:null),'#60a5fa',null]].forEach(([vals,clr,dash])=>{
+      ctx.save();ctx.strokeStyle=clr;ctx.lineWidth=1;ctx.globalAlpha=0.55;
+      if(dash)ctx.setLineDash(dash);
+      ctx.beginPath();let st=false;
+      vals.forEach((v,i)=>{ if(v===null)return; const x=offsetX+i*slotW+candleW/2,y=py(v); if(!st){ctx.moveTo(x,y);st=true;}else ctx.lineTo(x,y); });
+      ctx.stroke();ctx.restore();
+    });
+  }
+
+  // ── RSI 패널 ──
+  const RSI_P=14;
+  const closes2=ohlc.map(c=>c.c);
+  const rsiSeries=ohlc.map((_,i)=>{ if(i<RSI_P)return null; return _calcRSI(closes2.slice(0,i+1),RSI_P); });
+  const RSI_PAD_T=8,RSI_PAD_B=12,rsiChartH=RSI_H-RSI_PAD_T-RSI_PAD_B;
+  const rpy=v=>RSI_Y+RSI_PAD_T+rsiChartH*(1-v/100);
+  // 배경 + 구분선
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.025)';ctx.fillRect(0,RSI_Y,W,RSI_H);
+  ctx.strokeStyle='rgba(0,0,0,0.07)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,RSI_Y);ctx.lineTo(W,RSI_Y);ctx.stroke();
+  // 기준선 30/70
+  [[70,'#ff6b6b'],[30,'#3ecf8e']].forEach(([lv,clr])=>{
+    const y=rpy(lv);
+    ctx.strokeStyle=clr;ctx.globalAlpha=0.35;ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(PAD_L,y);ctx.lineTo(W-PAD_R,y);ctx.stroke();
+    ctx.setLineDash([]);ctx.globalAlpha=0.5;ctx.fillStyle=clr;
+    ctx.font='7px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(lv,W-PAD_R,y);
+  });
+  ctx.globalAlpha=1;
+  // RSI 선
+  const lastRsi=rsiSeries.filter(v=>v!==null).pop();
+  const rsiClr=lastRsi!==null?(lastRsi>70?'#ff6b6b':lastRsi<30?'#3ecf8e':'#a78bfa'):'#a78bfa';
+  ctx.strokeStyle=rsiClr;ctx.lineWidth=1.5;ctx.setLineDash([]);
+  ctx.beginPath();let rsiSt=false;
+  rsiSeries.forEach((v,i)=>{ if(v===null)return; const x=offsetX+i*slotW+candleW/2,y=rpy(v); if(!rsiSt){ctx.moveTo(x,y);rsiSt=true;}else ctx.lineTo(x,y); });
+  ctx.stroke();
+  // RSI 레이블 + 현재값
+  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.font='8px sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('RSI',PAD_L,RSI_Y+2);
+  if(lastRsi!==null){
+    ctx.fillStyle=rsiClr;ctx.font='bold 9px sans-serif';ctx.textAlign='right';
+    ctx.fillText(Math.round(lastRsi),W-PAD_R,RSI_Y+2);
+  }
+  ctx.restore();
 }
 
 async function drawChart(){
@@ -1816,6 +1911,54 @@ function buildCharGrid(){
 }
 function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);_saveCharKey(selC);}
 function _saveCharKey(ck){const jwt=localStorage.getItem('jwt');if(!jwt)return;fetch(_API+'/api/auth/me',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({charKey:ck})}).catch(()=>{});}
+
+// ── 설정 모달 ──
+function openSettings(){
+  const jwt=localStorage.getItem('jwt');
+  if(!jwt){ document.getElementById('loginModal').classList.add('show'); return; }
+  const p=_jwtPayload();
+  document.getElementById('nickInput').value=localStorage.getItem('user_nickname')||(p&&p.nickname)||'';
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
+async function saveNickname(){
+  const jwt=localStorage.getItem('jwt');if(!jwt)return;
+  const nick=document.getElementById('nickInput').value.trim();
+  if(!nick||nick.length<2){ toast('닉네임은 2자 이상이어야 해요'); return; }
+  try{
+    const res=await fetch(_API+'/api/auth/me',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({nickname:nick})});
+    if(res.ok){ localStorage.setItem('user_nickname',nick); closeSettings(); toast('닉네임이 변경됐어요!'); fetchLeaderboard(); }
+    else toast('저장 실패. 다시 시도해줘요.');
+  }catch{ toast('서버 연결 오류'); }
+}
+function logoutUser(){
+  localStorage.removeItem('jwt');localStorage.removeItem('user_nickname');localStorage.removeItem('login_skipped');
+  closeSettings(); document.getElementById('loginModal').classList.add('show'); toast('로그아웃 됐어요');
+}
+
+// ── 서버 포트폴리오 로드 (로그인 시 서버 상태로 복원) ──
+async function _loadServerPortfolio(){
+  const jwt=localStorage.getItem('jwt');if(!jwt)return;
+  try{
+    const res=await fetch(_API+'/api/auth/me',{headers:{'Authorization':'Bearer '+jwt}});
+    if(!res.ok)return;
+    const data=await res.json();
+    // 닉네임 캐싱
+    if(data.nickname&&!localStorage.getItem('user_nickname')) localStorage.setItem('user_nickname',data.nickname);
+    // charKey 복원 (아직 봇이 출전 전일 때만)
+    if(data.charKey&&typeof selC!=='undefined') selC=data.charKey;
+    // 포트폴리오 복원
+    if(data.portfolio){
+      const p=data.portfolio;
+      _portfolio.cash=p.cash; _portfolio.btc=p.btc;
+      _portfolio.avgCost=p.avgCost; _portfolio.seed=p.seed;
+      _savePortfolio();
+      if(p.botcoin) _currency.botcoin=p.botcoin;
+      if(typeof renderMapStats==='function') renderMapStats();
+      if(typeof renderTradeLog==='function') renderTradeLog();
+    }
+  }catch(e){}
+}
 
 // 포트폴리오 서버 동기화 (거래 후, 봇 출전/재기 시)
 function _syncPortfolio(){
@@ -4600,6 +4743,7 @@ function init(){
     const jwt=localStorage.getItem('jwt');
     const skipped=localStorage.getItem('login_skipped');
     if(!jwt&&!skipped){ document.getElementById('loginModal').classList.add('show'); }
+    if(jwt) _loadServerPortfolio();
   })();
   patchTutDim();patchSafeInt();patchCanvasRetina();wrapBP();wrapSC();moveLocked();
   startRemyPoll();
