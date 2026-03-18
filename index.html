@@ -1612,6 +1612,22 @@ function renderChartFromData(raw, cv, skipMarkers, fixedYMin, fixedYMax){
     ctx.fillRect(x,bodyTop,candleW,finalBodyH);
   });
 
+  // ── 거래량 바 (캔들 하단 오버레이) ──
+  if(isOhlc){
+    const vols=ohlc.map(c=>c.v||0);
+    const maxVol=Math.max(...vols)||1;
+    const VOL_H=22, volBase=PAD_T+chartH;
+    ctx.save();
+    ohlc.forEach((c,i)=>{
+      if(!c.v)return;
+      const vh=(c.v/maxVol)*VOL_H;
+      const x=offsetX+i*slotW;
+      ctx.fillStyle=c.c>=c.o?'rgba(62,207,142,0.22)':'rgba(255,107,107,0.22)';
+      ctx.fillRect(x,volBase-vh,candleW,vh);
+    });
+    ctx.restore();
+  }
+
   // x축 날짜 레이블 (시작·중간·끝 3개)
   ctx.fillStyle='rgba(0,0,0,0.3)';ctx.font='9px sans-serif';ctx.textAlign='center';
   const lblIdxs=[0,Math.floor(n/2),n-1];
@@ -1790,7 +1806,8 @@ async function drawChart(){
       const candles=await res.json();
       const raw=candles.reverse().map(c=>({
         o:c.opening_price, h:c.high_price, l:c.low_price, c:c.trade_price,
-        t:c.candle_date_time_kst||c.candle_date_time_utc
+        t:c.candle_date_time_kst||c.candle_date_time_utc,
+        v:c.candle_acc_trade_volume
       }));
       const _yMn=Math.min(...raw.map(c=>c.l)), _yMx=Math.max(...raw.map(c=>c.h));
       const _yPad=(_yMx-_yMn)*(activeTf==='W'?0.05:0.08)||1;
@@ -1888,9 +1905,35 @@ function buildCharGrid(){
   }).join('');
   updateNameTips();
 }
-function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);_saveCharKey(selC);}
+function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);_saveCharKey(selC);_updateUserPill();}
 function _saveCharKey(ck){const jwt=localStorage.getItem('jwt');if(!jwt)return;fetch(_API+'/api/auth/me',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({charKey:ck})}).catch(()=>{});}
 
+// ── 주간 시즌 리셋 ──
+function _checkWeeklyReset(){
+  var wk=typeof getWeekKey==='function'?getWeekKey():null;
+  if(!wk)return;
+  var last=_store.getItem('last_season_week');
+  if(!last){_store.setItem('last_season_week',wk);return;}
+  if(last===wk)return;
+  _store.setItem('last_season_week',wk);
+  var hadTrades=_portfolio.trades&&_portfolio.trades.length>0;
+  if(!hadTrades)return;
+  // 시즌 완료 보상
+  var ret=_portfolio.seed>0?(_portfolio.cash/_portfolio.seed-1)*100:0;
+  var shards=ret>10?10:ret>0?5:3;
+  _currency.shards=(_currency.shards||0)+shards;
+  // 포트폴리오 리셋
+  _portfolio={cash:1000000,btc:0,avgCost:0,trades:[],lastTradeTs:0,seed:1000000,tzLastHour:-1};
+  _savePortfolio();
+  if(typeof _syncPortfolio==='function') _syncPortfolio();
+  var _jwt=localStorage.getItem('jwt');
+  if(_jwt) fetch(_API+'/api/portfolio/trades',{method:'DELETE',headers:{'Authorization':'Bearer '+_jwt}}).catch(()=>{});
+  setTimeout(function(){
+    _gToast('🏆 새 시즌 시작! 💎 +'+shards+' DATA SHARDS 지급!','gold');
+    if(typeof renderTradeLog==='function') renderTradeLog();
+    if(typeof renderMapStats==='function') renderMapStats();
+  },1500);
+}
 // ── 유저 필 업데이트 ──
 function _updateUserPill(){
   var el=document.getElementById('userPill');
@@ -3846,6 +3889,9 @@ window.addEventListener('load',function(){
     if(typeof _savePortfolio === 'function') _savePortfolio();
     if(typeof _syncPortfolio === 'function') _syncPortfolio();
     if(typeof renderTradeLog === 'function') renderTradeLog();
+    // 서버 거래이력 초기화
+    var _jwt=localStorage.getItem('jwt');
+    if(_jwt) fetch(_API+'/api/portfolio/trades',{method:'DELETE',headers:{'Authorization':'Bearer '+_jwt}}).catch(()=>{});
   }
 
   // ── 광고 시뮬레이션 ──
@@ -3973,7 +4019,8 @@ window.addEventListener('load',function(){
     var amt = (document.getElementById('evalAmt')||{}).textContent || '112.4만';
     var rk  = (document.getElementById('aRk')||{}).textContent || '23';
     var pos = !pnl.startsWith('-');
-    return { av, nm, ch, pnl, amt, rk, pos };
+    var nick = localStorage.getItem('user_nickname') || '';
+    return { av, nm, ch, pnl, amt, rk, pos, nick };
   }
 
   // ── Canvas 카드 드로잉 ──
@@ -4018,6 +4065,12 @@ window.addEventListener('load',function(){
     ctx.font = '700 10px sans-serif';
     ctx.letterSpacing = '2px';
     ctx.fillText('CRYPTO BOT ARENA', 24, 32);
+    if (d.nick) {
+      ctx.fillStyle = 'rgba(255,255,255,.45)';
+      ctx.font = '500 10px sans-serif';
+      ctx.letterSpacing = '0px';
+      ctx.fillText('@' + d.nick, 24, 48);
+    }
 
     // 시즌 배지
     ctx.fillStyle = d.pos ? 'rgba(62,207,142,.2)' : 'rgba(255,107,107,.2)';
@@ -4732,6 +4785,7 @@ function init(){
     if(!jwt&&!skipped){ document.getElementById('loginModal').classList.add('show'); }
     if(jwt) _loadServerPortfolio();
     _updateUserPill();
+    setTimeout(_checkWeeklyReset, 2000);
   })();
   patchTutDim();patchSafeInt();patchCanvasRetina();wrapBP();wrapSC();moveLocked();
   startRemyPoll();
