@@ -11,8 +11,8 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 2 진행 중 (Sprint 3-6 대부분 완료, 2026-03-18) |
-| **PRD 버전** | v4.0 (Lion PM, 2026-03-15) |
+| **현재 버전** | Phase 2 진행 중 (Sprint A 시작, 2026-03-19) |
+| **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
 | **개발자** | 시윤 (1인 솔로 개발) |
 
@@ -217,6 +217,8 @@ bot_arena_server/             (c:\workspace\bot_arena_server)
 | DELETE | `/api/portfolio/trades` | 거래 이력 전체 삭제 — 파산 리바이벌 시 (JWT 필수) |
 | GET | `/api/leaderboard` | 수익률 순위 조회 |
 | GET | `/api/candles` | 캔들 데이터 (`?tf=minutes/240&count=150`) |
+| POST | `/api/trade/validate` | 거래 검증 (가격·쿨다운·포트폴리오 조작 감지) → actualPrice 반환 (JWT 필수) |
+| GET | `/api/portfolio/state` | 포트폴리오 상태 조회 — cash/btc/avgCost/seed/botcoin/weeklyReturn (JWT 필수) |
 
 ### 프론트엔드 주요 상수 (index.html)
 ```js
@@ -376,40 +378,47 @@ Ctrl+Shift+R
 
 ---
 
-## 12. Phase 2 남은 작업 (PRD v4 기준)
+## 12. Phase 2 남은 작업 (PRD v5 기준 — 소프트 런치 Apr 15 목표)
 
-### Sprint 1-2: Foundation
+### Sprint A — 보안 (P0, Mar 19-25)
 | # | 작업 | 상태 |
 |---|------|------|
-| 2.1 | Code modularization (Vite + 모듈 분리) | ⬜ 미착수 |
-| 2.6 | Backend skeleton (Express + PostgreSQL + Prisma + Railway 배포) | ✅ 완료 |
+| A1 | 서버 거래 검증 API (`POST /api/trade/validate`) | 🔄 진행 중 |
+| A2 | `_execTrade()` 서버 검증 연동 | 🔄 진행 중 |
+| A3 | 포트폴리오 상태 폴링 (`GET /api/portfolio/state`) | 🔄 진행 중 |
+| A4 | localStorage → 서버 마이그레이션 완성 | 🔄 진행 중 |
 
-### Sprint 3-4: Virtual Trading Engine
+### Sprint B — 경제 (P1, Mar 26-Apr 1)
 | # | 작업 | 상태 |
 |---|------|------|
-| 2.7 | Virtual execution engine (서버사이드 봇 로직) | ⬜ 미착수 (클라이언트 사이드 봇은 동작 중) |
-| 2.8 | Trade reason logging (U5) | ✅ 완료 (`_fmtReason()` 이모지 포맷 + 서버 Trade 테이블 저장) |
-| 2.9 | Portfolio tracking (PostgreSQL) | ✅ 완료 (PATCH /api/portfolio 동기화 + GET /api/portfolio/trades 복원) |
-| 2.10 | Kakao OAuth + Google OAuth (프론트엔드 연동 포함) | ✅ 완료 |
-| 2.10b | Apple OAuth | ⬜ Apple Developer 계정($99/년) 필요 |
+| B1 | 티어 시스템 (Iron/Bronze/Silver/Gold/Diamond) | ⬜ 미착수 |
+| B2 | 경제 Sink 추가 (봇이름 50BC·스킨 200BC·프리미엄블록 10DS) | ⬜ 미착수 |
+| B3 | 보상 곡선 튜닝 (일일 ~300 획득 / ~200 소비) | ⬜ 미착수 |
+| B4 | 업적 시스템 5종 | ⬜ 미착수 |
 
-### Sprint 5-6: Game Loop + Multiplayer
+### Sprint C — 품질 (P1, Apr 2-8)
 | # | 작업 | 상태 |
 |---|------|------|
-| 2.11 | Real leaderboard API (수익률 기준, Upbit BTC 가격 연동) | ✅ 완료 (window.LB 프론트 연동 포함) |
-| 2.12 | BOTCOIN/SHARDS 실제 경제 | ✅ 완료 |
-| 2.13 | Game loop: Action-Result-Reward | ✅ 완료 |
-| 2.14 | Enhanced chart (U6) | ✅ 완료 (BB-20·RSI-14·거래량 바·실거래 마커·진입가 수평선) |
-| 2.15 | Onboarding flow (U4) | ✅ 완료 (신규 유저 skipLogin/OAuth 후 자동 튜토리얼 시작) |
+| C1 | 코드 4모듈 분리 (`<script src>` 방식, Vite는 Phase 3) | ⬜ 미착수 |
+| C2 | 가상 스크롤 (거래 내역 DOM 5개 제한) | ⬜ 미착수 |
+| C3 | 에러 바운더리 (핵심 함수 try/catch + 자동복구) | ⬜ 미착수 |
+| C4 | QA 스크립트 확장 (_API·safeInt·업적 함수 등 추가 체크) | ⬜ 미착수 |
 
-### Sprint 7-8: Monetization + Polish
+### Sprint D — 런치 (P0, Apr 9-15)
 | # | 작업 | 상태 |
 |---|------|------|
-| 2.16 | In-app purchase (Toss Payments) | ⬜ 미착수 (사업자 계정 필요) |
-| 2.17 | Ad integration (AdMob/Unity Ads) | ⬜ 미착수 |
-| 2.18 | DOM optimization (P2) | ⬜ 미착수 |
-| 2.19 | Share card v2 (서버 렌더 OG) | 🔶 부분 완료 (닉네임·캐릭터·수익률 동적 반영, OG 서버렌더는 미착수) |
-| 2.20 | QA + soft launch | ⬜ 미착수 |
+| D1 | OG 이미지 서버 렌더 (`GET /api/og?userId=...`) | ⬜ 미착수 |
+| D2 | 딥링크 + 레퍼럴 (`?ref=userId`, `POST /api/referral`) | ⬜ 미착수 |
+| D3 | 버그 배쉬 + 메트릭 대시보드 | ⬜ 미착수 |
+
+### Phase 3로 연기
+| 항목 | 이유 |
+|------|------|
+| Vite 번들링 + 완전 모듈화 | 2.1 |
+| 서버사이드 tick 엔진 (완전 서버 권위) | 2.7 |
+| Apple OAuth | Apple Developer 계정 $99/년 필요 |
+| Toss Payments 인앱 결제 | 사업자 계정 필요 |
+| AdMob/Unity Ads | - |
 
 ---
 

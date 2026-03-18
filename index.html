@@ -1974,25 +1974,28 @@ function logoutUser(){
 async function _loadServerPortfolio(){
   const jwt=localStorage.getItem('jwt');if(!jwt)return;
   try{
+    // 1. 유저 정보 (닉네임·charKey)
     const res=await fetch(_API+'/api/auth/me',{headers:{'Authorization':'Bearer '+jwt}});
     if(!res.ok)return;
     const data=await res.json();
-    // 닉네임 캐싱
     if(data.nickname&&!localStorage.getItem('user_nickname')) localStorage.setItem('user_nickname',data.nickname);
     _updateUserPill();
-    // charKey 복원 (아직 봇이 출전 전일 때만)
     if(data.charKey&&typeof selC!=='undefined') selC=data.charKey;
-    // 포트폴리오 복원
-    if(data.portfolio){
-      const p=data.portfolio;
-      _portfolio.cash=p.cash; _portfolio.btc=p.btc;
-      _portfolio.avgCost=p.avgCost; _portfolio.seed=p.seed;
-      _savePortfolio();
-      if(p.botcoin) _currency.botcoin=p.botcoin;
-      if(typeof renderMapStats==='function') renderMapStats();
-      if(typeof renderTradeLog==='function') renderTradeLog();
-    }
-    // 거래 이력 복원
+
+    // 2. 포트폴리오 상태 (서버가 정답)
+    try{
+      const sRes=await fetch(_API+'/api/portfolio/state',{headers:{'Authorization':'Bearer '+jwt}});
+      if(sRes.ok){
+        const p=await sRes.json();
+        _portfolio.cash=p.cash; _portfolio.btc=p.btc;
+        _portfolio.avgCost=p.avgCost; _portfolio.seed=p.seed;
+        _savePortfolio();
+        if(p.botcoin) _currency.botcoin=p.botcoin;
+        if(typeof renderMapStats==='function') renderMapStats();
+      }
+    }catch(e2){}
+
+    // 3. 거래 이력 복원
     try{
       const tRes=await fetch(_API+'/api/portfolio/trades',{headers:{'Authorization':'Bearer '+jwt}});
       if(tRes.ok){
@@ -2006,7 +2009,7 @@ async function _loadServerPortfolio(){
           if(typeof renderTradeLog==='function') renderTradeLog();
         }
       }
-    }catch(e2){}
+    }catch(e3){}
   }catch(e){}
 }
 
@@ -2995,11 +2998,40 @@ function _evalBlockCondition(blk, ind){
 }
 
 // ── 거래 실행 ──
-function _execTrade(side, reason, price){
-  var COOLDOWN = 1 * 60 * 1000; // 1분 쿨다운
+var _tradePending = false; // 서버 검증 중복 방지
+async function _execTrade(side, reason, price){
+  var COOLDOWN = 1 * 60 * 1000; // 1분 쿨다운 (로컬 선체크)
   if(Date.now() - _portfolio.lastTradeTs < COOLDOWN) return false;
-  var pnl = null;
+  if(_tradePending) return false;
 
+  // 로그인 유저: 서버 거래 검증 (치팅 방지)
+  var jwt = localStorage.getItem('jwt');
+  if(jwt){
+    _tradePending = true;
+    try{
+      var vr = await fetch(_API+'/api/trade/validate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+        body:JSON.stringify({side, price, portfolio:{cash:_portfolio.cash, btc:_portfolio.btc}})
+      });
+      if(!vr.ok){
+        var verr = await vr.json().catch(function(){ return {}; });
+        if(verr.error === 'price_stale' && verr.actualPrice){
+          price = verr.actualPrice; // 서버 최신가로 교체 후 계속 진행
+        } else {
+          if(verr.error === 'cooldown') _gToast('⏳ 쿨다운 중 ('+verr.remaining+'초)', 'sky');
+          _tradePending = false;
+          return false;
+        }
+      } else {
+        var vdata = await vr.json();
+        if(vdata.actualPrice) price = vdata.actualPrice; // 서버 시세로 덮어쓰기
+      }
+    } catch(e){ /* 네트워크 오류 → 로컬 실행 허용 (오프라인 폴백) */ }
+    _tradePending = false;
+  }
+
+  var pnl = null;
   if(side === 'buy' && _portfolio.btc === 0 && _portfolio.cash > 10000){
     var amt = _portfolio.cash * 0.95;
     _portfolio.btc = amt / price;
