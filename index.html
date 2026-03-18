@@ -1444,7 +1444,7 @@ function fetchInitialPrices(){
   // WebSocket connect() 가 곧 실행되어 실시간 갱신 시작
 }
 function buildLB(data){document.getElementById('lbList').innerHTML=data.map((r,i)=>{const rc=r.r===1?'r1':r.r===2?'r2':r.r===3?'r3':'';const rw=r.me?'me lb-row':r.r===1?'t1 lb-row':'lb-row';return `<div class="${rw}" style="animation-delay:${i*.05}s"><div class="lb-rk ${rc}">${r.r}</div><div class="lb-av2">${r.e}</div><div class="lb-info"><div class="lb-bn">${r.n}</div><div class="lb-un">@${r.u}${r.me?'<span class="me-tag">• 나</span>':''}</div></div><div class="lb-rt"><div class="lb-pnl ${r.p.startsWith('+')?'pos':'neg'}">${r.p}</div><div class="lb-chg">${r.d==='up'?'▲':'▼'} ${r.c}</div></div></div>`}).join('');}
-function switchLb(el,t){document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(t==='g'){fetchLeaderboard();}else{buildLB(t==='f'?LB.filter(r=>r.me||r.r<=3):LB);}}
+function switchLb(el,t){document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(t==='g'){fetchLeaderboard();}else{const data=window.LB||LB;buildLB(t==='f'?data.filter(r=>r.me||r.r<=3):data);}}
 
 // ══════════ SPARKLINE ══════════
 function buildSpk(){
@@ -1957,6 +1957,21 @@ async function _loadServerPortfolio(){
       if(typeof renderMapStats==='function') renderMapStats();
       if(typeof renderTradeLog==='function') renderTradeLog();
     }
+    // 거래 이력 복원
+    try{
+      const tRes=await fetch(_API+'/api/portfolio/trades',{headers:{'Authorization':'Bearer '+jwt}});
+      if(tRes.ok){
+        const serverTrades=await tRes.json();
+        if(serverTrades.length){
+          _portfolio.trades=serverTrades.map(t=>({
+            side:t.side, price:t.price, reason:t.reason||'',
+            pnl:t.pnl, ts:new Date(t.createdAt).getTime(),
+          }));
+          _savePortfolio();
+          if(typeof renderTradeLog==='function') renderTradeLog();
+        }
+      }
+    }catch(e2){}
   }catch(e){}
 }
 
@@ -4703,7 +4718,12 @@ function init(){
   (function(){
     const params=new URLSearchParams(location.search);
     const token=params.get('token');
-    if(token){ localStorage.setItem('jwt',token); history.replaceState({},'',location.pathname); }
+    if(token){
+      const isFirst=!localStorage.getItem('jwt');
+      localStorage.setItem('jwt',token); history.replaceState({},'',location.pathname);
+      // OAuth 첫 로그인 → 튜토리얼 자동 시작
+      if(isFirst&&!localStorage.getItem('tut_done')) setTimeout(startTut,600);
+    }
     const jwt=localStorage.getItem('jwt');
     const skipped=localStorage.getItem('login_skipped');
     if(!jwt&&!skipped){ document.getElementById('loginModal').classList.add('show'); }
@@ -4720,7 +4740,11 @@ else{init();}
 const _API='https://bot-arena-server-production.up.railway.app';
 function loginKakao(){ location.href=_API+'/api/auth/kakao'; }
 function loginGoogle(){ location.href=_API+'/api/auth/google'; }
-function skipLogin(){ localStorage.setItem('login_skipped','1'); document.getElementById('loginModal').classList.remove('show'); }
+function skipLogin(){
+  localStorage.setItem('login_skipped','1');
+  document.getElementById('loginModal').classList.remove('show');
+  if(!localStorage.getItem('tut_done')) setTimeout(startTut,300);
+}
 
 // JWT payload 디코드
 function _jwtPayload(){ try{ const t=localStorage.getItem('jwt'); if(!t)return null; return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{return null;} }
