@@ -4698,42 +4698,6 @@ function startRemyPoll(){
     }
   },300);
 }
-const _API='https://bot-arena-server-production.up.railway.app';
-function loginKakao(){ location.href=_API+'/api/auth/kakao'; }
-function loginGoogle(){ location.href=_API+'/api/auth/google'; }
-function skipLogin(){ localStorage.setItem('login_skipped','1'); document.getElementById('loginModal').classList.remove('show'); }
-
-// JWT payload 디코드 (서명 검증 없이 닉네임/userId 추출)
-function _jwtPayload(){ try{ const t=localStorage.getItem('jwt'); if(!t)return null; return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{return null;} }
-
-// charKey → 이모지 매핑
-const _CHAR_EM={rabbit:'🐰',goat:'🐐',bear:'🐻',fox:'🦊',cat:'🐱',otter:'🦦'};
-
-// 리더보드 API 연동 — 실패 시 기존 mock LB 유지
-async function fetchLeaderboard(){
-  try{
-    const res=await fetch(_API+'/api/leaderboard');
-    if(!res.ok)return;
-    const rows=await res.json();
-    const myNick=(_jwtPayload()||{}).nickname;
-    window.LB=rows.map(p=>({
-      r:p.rank,
-      e:_CHAR_EM[p.charKey]||'🤖',
-      n:p.nickname,
-      u:p.nickname,
-      p:(p.returnRate>=0?'+':'')+(p.returnRate*100).toFixed(1)+'%',
-      c:'',
-      d:p.returnRate>=0?'up':'dn',
-      me:!!(myNick&&p.nickname===myNick),
-    }));
-    // 로그인 유저가 리스트에 없으면 하단에 추가
-    if(myNick&&!window.LB.some(r=>r.me)){
-      window.LB.push({r:'?',e:'🤖',n:myNick,u:myNick,p:'+0.0%',c:'',d:'up',me:true});
-    }
-    buildLB(window.LB);
-  }catch(e){ /* 실패 시 mock 유지 */ }
-}
-
 function init(){
   // JWT 토큰 URL 파라미터에서 추출 → localStorage 저장
   (function(){
@@ -4751,6 +4715,44 @@ function init(){
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
 else{init();}
 })();
+
+// ── 전역 상수 & 함수 (Script[0]의 함수들도 접근 가능해야 하는 것들) ──
+const _API='https://bot-arena-server-production.up.railway.app';
+function loginKakao(){ location.href=_API+'/api/auth/kakao'; }
+function loginGoogle(){ location.href=_API+'/api/auth/google'; }
+function skipLogin(){ localStorage.setItem('login_skipped','1'); document.getElementById('loginModal').classList.remove('show'); }
+
+// JWT payload 디코드
+function _jwtPayload(){ try{ const t=localStorage.getItem('jwt'); if(!t)return null; return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{return null;} }
+
+// charKey → 이모지 매핑
+const _CHAR_EM={rabbit:'🐰',goat:'🐐',bear:'🐻',fox:'🦊',cat:'🐱',otter:'🦦'};
+
+// 리더보드 API 연동 — 실패 시 기존 mock LB 유지
+async function fetchLeaderboard(){
+  try{
+    const res=await fetch(_API+'/api/leaderboard');
+    if(!res.ok)return;
+    const rows=await res.json();
+    const myNick=(_jwtPayload()||{}).nickname;
+    const myStoredNick=localStorage.getItem('user_nickname');
+    window.LB=rows.map(p=>({
+      r:p.rank,
+      e:_CHAR_EM[p.charKey]||'🤖',
+      n:p.nickname,
+      u:p.nickname,
+      p:(p.returnRate>=0?'+':'')+(p.returnRate*100).toFixed(1)+'%',
+      c:'',
+      d:p.returnRate>=0?'up':'dn',
+      me:!!(p.nickname===(myStoredNick||myNick)),
+    }));
+    if((myStoredNick||myNick)&&!window.LB.some(r=>r.me)){
+      const n=myStoredNick||myNick;
+      window.LB.push({r:'?',e:'🤖',n,u:n,p:'+0.0%',c:'',d:'up',me:true});
+    }
+    buildLB(window.LB);
+  }catch(e){ /* 실패 시 mock 유지 */ }
+}
 </script>
 </body>
 </html>
