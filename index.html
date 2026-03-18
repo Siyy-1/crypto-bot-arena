@@ -1816,6 +1816,21 @@ function buildCharGrid(){
 }
 function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);_saveCharKey(selC);}
 function _saveCharKey(ck){const jwt=localStorage.getItem('jwt');if(!jwt)return;fetch(_API+'/api/auth/me',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({charKey:ck})}).catch(()=>{});}
+
+// 포트폴리오 서버 동기화 (거래 후, 봇 출전/재기 시)
+function _syncPortfolio(){
+  const jwt=localStorage.getItem('jwt');if(!jwt)return;
+  fetch(_API+'/api/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+    body:JSON.stringify({cash:_portfolio.cash,btc:_portfolio.btc,avgCost:_portfolio.avgCost,seed:_portfolio.seed,botcoin:_currency.botcoin})
+  }).catch(()=>{});
+}
+// 거래 기록 서버 저장
+function _recordTrade(side,price,reason,pnl){
+  const jwt=localStorage.getItem('jwt');if(!jwt)return;
+  fetch(_API+'/api/portfolio/trade',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+    body:JSON.stringify({side,price,reason,pnl:pnl??null})
+  }).catch(()=>{});
+}
 function updateNameTips(){const c=CHARS[selC];document.getElementById('nmTips').innerHTML='추천: '+c.tips.map(t=>`<span onclick="setNm('${t}')">${t}</span>`).join('');}
 function setNm(n){document.getElementById('botNm').value=n;}
 
@@ -2438,6 +2453,7 @@ function closeLaunch(){
   // 포트폴리오 초기화 (새 봇 출전)
   _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
   _savePortfolio();
+  _syncPortfolio();
   renderTradeLog();
   renderMapStats();
   resetBlocks();setFStep(1);goPage('arena');toast(`🎉 ${nm} 출전 완료!`);
@@ -2827,6 +2843,8 @@ function _execTrade(side, reason, price){
   _portfolio.trades.unshift({ ts: Date.now(), side: side, price: price, reason: reason, pnl: pnl });
   if(_portfolio.trades.length > 20) _portfolio.trades.pop();
   _savePortfolio();
+  _syncPortfolio();
+  _recordTrade(side, price, reason, pnl);
   renderTradeLog();
   renderMapStats();
   // 전체 통산 첫 거래 축하
@@ -3665,6 +3683,7 @@ window.addEventListener('load',function(){
     // _portfolio 초기화 (포지션/평단가 리셋)
     _portfolio = { cash: newSeed, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: newSeed, tzLastHour: -1 };
     if(typeof _savePortfolio === 'function') _savePortfolio();
+    if(typeof _syncPortfolio === 'function') _syncPortfolio();
     if(typeof renderTradeLog === 'function') renderTradeLog();
   }
 
