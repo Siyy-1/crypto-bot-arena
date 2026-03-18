@@ -773,6 +773,20 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .qs-apply-btn{width:100%;padding:14px;background:var(--mint);color:#fff;font-size:14px;font-weight:900;border:none;border-radius:var(--r);cursor:pointer;margin-bottom:8px;box-shadow:0 4px 12px rgba(62,207,142,.3);}
 .qs-skip-btn{width:100%;padding:10px;background:none;color:var(--ink3);font-size:13px;font-weight:700;border:none;cursor:pointer;}
 
+/* ── 로그인 모달 ── */
+#loginModal{position:fixed;inset:0;z-index:9000;display:none;background:rgba(20,16,12,.92);
+  backdrop-filter:blur(12px);align-items:center;justify-content:center;flex-direction:column;}
+#loginModal.show{display:flex;}
+.login-card{background:var(--card);border-radius:24px;padding:32px 24px;max-width:320px;width:90%;
+  box-shadow:var(--neu-out);text-align:center;}
+.login-title{font-size:22px;font-weight:900;color:var(--ink1);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--ink3);margin-bottom:24px;line-height:1.6;}
+.login-btn{width:100%;padding:14px;border-radius:14px;font-size:15px;font-weight:800;
+  border:none;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-btn.kakao{background:#FEE500;color:#3A1D1D;}
+.login-btn.google{background:#fff;color:#333;border:1.5px solid #ddd;}
+.login-skip{font-size:12px;color:var(--ink3);cursor:pointer;text-decoration:underline;margin-top:4px;}
+
 </style>
 </head>
 <body>
@@ -809,6 +823,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 <div class="currency-bar" id="currencyBar">
   <div class="currency-item bc">🪙 <span id="botcoinAmt">0</span></div>
   <div class="currency-item ds">💎 <span id="shardsAmt">0</span></div>
+</div>
+
+<!-- ── 로그인 모달 ── -->
+<div id="loginModal">
+  <div class="login-card">
+    <div class="login-title">🤖 봇 아레나</div>
+    <div class="login-sub">로그인하면 리더보드에 참여하고<br>내 봇 전적을 저장할 수 있어요!</div>
+    <button class="login-btn kakao" onclick="loginKakao()">🟡 카카오로 시작하기</button>
+    <button class="login-btn google" onclick="loginGoogle()">🔵 구글로 시작하기</button>
+    <div class="login-skip" onclick="skipLogin()">나중에 할게요</div>
+  </div>
 </div>
 <div class="ticker-w"><div class="ticker-i" id="tkr"></div></div>
 
@@ -1380,6 +1405,7 @@ function buildTicker(){
   // REST API로 초기 시세 즉시 로드
   fetchInitialPrices();
   initCurrency();
+  fetchLeaderboard();
 }
 // REST API는 file:// CORS로 막혀있어 WebSocket 첫 메시지 도착 시 자동으로 티커 갱신됨
 // fetchInitialPrices는 GitHub Pages 배포 후 활성화
@@ -1388,7 +1414,7 @@ function fetchInitialPrices(){
   // WebSocket connect() 가 곧 실행되어 실시간 갱신 시작
 }
 function buildLB(data){document.getElementById('lbList').innerHTML=data.map((r,i)=>{const rc=r.r===1?'r1':r.r===2?'r2':r.r===3?'r3':'';const rw=r.me?'me lb-row':r.r===1?'t1 lb-row':'lb-row';return `<div class="${rw}" style="animation-delay:${i*.05}s"><div class="lb-rk ${rc}">${r.r}</div><div class="lb-av2">${r.e}</div><div class="lb-info"><div class="lb-bn">${r.n}</div><div class="lb-un">@${r.u}${r.me?'<span class="me-tag">• 나</span>':''}</div></div><div class="lb-rt"><div class="lb-pnl ${r.p.startsWith('+')?'pos':'neg'}">${r.p}</div><div class="lb-chg">${r.d==='up'?'▲':'▼'} ${r.c}</div></div></div>`}).join('');}
-function switchLb(el,t){document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');buildLB(t==='f'?LB.filter(r=>r.me||r.r<=3):LB);}
+function switchLb(el,t){document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(t==='g'){fetchLeaderboard();}else{buildLB(t==='f'?LB.filter(r=>r.me||r.r<=3):LB);}}
 
 // ══════════ SPARKLINE ══════════
 function buildSpk(){
@@ -1684,7 +1710,7 @@ async function drawChart(){
   if(isHttps){
     _chartFetching=true;
     try{
-      const url=`https://api.upbit.com/v1/candles/${endpoint}?market=KRW-BTC&count=${count}`;
+      const url=`https://bot-arena-server-production.up.railway.app/api/candles?tf=${endpoint}&count=${count}`;
       const res=await fetch(url);
       if(!res.ok) throw new Error('fetch fail '+res.status);
       const candles=await res.json();
@@ -1788,7 +1814,8 @@ function buildCharGrid(){
   }).join('');
   updateNameTips();
 }
-function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);}
+function selChar(el){document.querySelectorAll('.char-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');selC=el.dataset.c;updateNameTips();document.getElementById('botEm').textContent=CHARS[selC].e;if(navigator.vibrate)navigator.vibrate(30);_saveCharKey(selC);}
+function _saveCharKey(ck){const jwt=localStorage.getItem('jwt');if(!jwt)return;fetch(_API+'/api/auth/me',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},body:JSON.stringify({charKey:ck})}).catch(()=>{});}
 function updateNameTips(){const c=CHARS[selC];document.getElementById('nmTips').innerHTML='추천: '+c.tips.map(t=>`<span onclick="setNm('${t}')">${t}</span>`).join('');}
 function setNm(n){document.getElementById('botNm').value=n;}
 
@@ -4509,7 +4536,52 @@ function startRemyPoll(){
     }
   },300);
 }
+const _API='https://bot-arena-server-production.up.railway.app';
+function loginKakao(){ location.href=_API+'/api/auth/kakao'; }
+function loginGoogle(){ location.href=_API+'/api/auth/google'; }
+function skipLogin(){ localStorage.setItem('login_skipped','1'); document.getElementById('loginModal').classList.remove('show'); }
+
+// JWT payload 디코드 (서명 검증 없이 닉네임/userId 추출)
+function _jwtPayload(){ try{ const t=localStorage.getItem('jwt'); if(!t)return null; return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{return null;} }
+
+// charKey → 이모지 매핑
+const _CHAR_EM={rabbit:'🐰',goat:'🐐',bear:'🐻',fox:'🦊',cat:'🐱',otter:'🦦'};
+
+// 리더보드 API 연동 — 실패 시 기존 mock LB 유지
+async function fetchLeaderboard(){
+  try{
+    const res=await fetch(_API+'/api/leaderboard');
+    if(!res.ok)return;
+    const rows=await res.json();
+    const myNick=(_jwtPayload()||{}).nickname;
+    window.LB=rows.map(p=>({
+      r:p.rank,
+      e:_CHAR_EM[p.charKey]||'🤖',
+      n:p.nickname,
+      u:p.nickname,
+      p:(p.returnRate>=0?'+':'')+(p.returnRate*100).toFixed(1)+'%',
+      c:'',
+      d:p.returnRate>=0?'up':'dn',
+      me:!!(myNick&&p.nickname===myNick),
+    }));
+    // 로그인 유저가 리스트에 없으면 하단에 추가
+    if(myNick&&!window.LB.some(r=>r.me)){
+      window.LB.push({r:'?',e:'🤖',n:myNick,u:myNick,p:'+0.0%',c:'',d:'up',me:true});
+    }
+    buildLB(window.LB);
+  }catch(e){ /* 실패 시 mock 유지 */ }
+}
+
 function init(){
+  // JWT 토큰 URL 파라미터에서 추출 → localStorage 저장
+  (function(){
+    const params=new URLSearchParams(location.search);
+    const token=params.get('token');
+    if(token){ localStorage.setItem('jwt',token); history.replaceState({},'',location.pathname); }
+    const jwt=localStorage.getItem('jwt');
+    const skipped=localStorage.getItem('login_skipped');
+    if(!jwt&&!skipped){ document.getElementById('loginModal').classList.add('show'); }
+  })();
   patchTutDim();patchSafeInt();patchCanvasRetina();wrapBP();wrapSC();moveLocked();
   startRemyPoll();
 }
