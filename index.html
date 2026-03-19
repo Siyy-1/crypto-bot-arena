@@ -1967,6 +1967,7 @@ async function saveNickname(){
   }catch{ toast('서버 연결 오류'); }
 }
 function logoutUser(){
+  _stopPortfolioPoll(); // A5: 폴링 중단
   localStorage.removeItem('jwt');localStorage.removeItem('user_nickname');localStorage.removeItem('login_skipped');
   _updateUserPill(); closeSettings(); document.getElementById('loginModal').classList.add('show'); toast('로그아웃 됐어요');
 }
@@ -1979,7 +1980,7 @@ async function _loadServerPortfolio(){
     const res=await fetch(_API+'/api/auth/me',{headers:{'Authorization':'Bearer '+jwt}});
     if(!res.ok)return;
     const data=await res.json();
-    if(data.nickname&&!localStorage.getItem('user_nickname')) localStorage.setItem('user_nickname',data.nickname);
+    if(data.nickname){ localStorage.setItem('user_nickname',data.nickname); } // A6: 서버 닉네임 항상 우선
     _updateUserPill();
     if(data.charKey&&typeof selC!=='undefined') selC=data.charKey;
 
@@ -1991,8 +1992,9 @@ async function _loadServerPortfolio(){
         _portfolio.cash=p.cash; _portfolio.btc=p.btc;
         _portfolio.avgCost=p.avgCost; _portfolio.seed=p.seed;
         _savePortfolio();
-        if(p.botcoin) _currency.botcoin=p.botcoin;
+        if(p.botcoin !== undefined) _currency.botcoin=p.botcoin; // A6: botcoin=0도 반영
         if(typeof renderMapStats==='function') renderMapStats();
+        _startPortfolioPoll(); // A5: 초기 로드 후 폴링 시작
       }
     }catch(e2){}
 
@@ -2014,13 +2016,39 @@ async function _loadServerPortfolio(){
   }catch(e){}
 }
 
-// 포트폴리오 서버 동기화 — 비재무 필드만 (seed, botcoin)
-// cash/btc/avgCost는 /api/trade/execute 에서만 업데이트
+// 포트폴리오 서버 동기화 — botcoin만 (A6: seed/cash/btc는 서버 전용 엔드포인트에서만 변경)
 function _syncPortfolio(){
   const jwt=localStorage.getItem('jwt');if(!jwt)return;
   fetch(_API+'/api/portfolio',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
-    body:JSON.stringify({seed:_portfolio.seed,botcoin:_currency.botcoin})
+    body:JSON.stringify({botcoin:_currency.botcoin})
   }).catch(()=>{});
+}
+
+// ── A5: 포트폴리오 상태 폴링 (60s 간격, 서버를 정답으로 유지) ──
+var _pollPortfolioTid=0;
+function _startPortfolioPoll(){
+  if(_pollPortfolioTid)return; // 중복 방지
+  var _pollFn=async function(){
+    var jwt=localStorage.getItem('jwt');
+    if(!jwt){_pollPortfolioTid=0;return;}
+    if(!_tradePending){
+      try{
+        var r=await fetch(_API+'/api/portfolio/state',{headers:{'Authorization':'Bearer '+jwt}});
+        if(r.ok){
+          var p=await r.json();
+          var changed=p.cash!==_portfolio.cash||p.btc!==_portfolio.btc||p.seed!==_portfolio.seed;
+          _portfolio.cash=p.cash;_portfolio.btc=p.btc;_portfolio.avgCost=p.avgCost;_portfolio.seed=p.seed;
+          if(p.botcoin!==undefined)_currency.botcoin=p.botcoin;
+          if(changed){_savePortfolio();if(typeof renderMapStats==='function')renderMapStats();}
+        }
+      }catch(e){}
+    }
+    _pollPortfolioTid=setTimeout(_pollFn,60000);
+  };
+  _pollPortfolioTid=setTimeout(_pollFn,60000);
+}
+function _stopPortfolioPoll(){
+  if(_pollPortfolioTid){clearTimeout(_pollPortfolioTid);_pollPortfolioTid=0;}
 }
 // 포트폴리오 리셋 서버 동기화 (봇 출전, 파산 리바이벌, 주간 리셋)
 function _resetPortfolioServer(seed){
