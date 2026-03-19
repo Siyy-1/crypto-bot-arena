@@ -812,6 +812,21 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .ref-banner-reward{display:inline-block;margin-top:6px;background:rgba(255,184,48,.18);color:#d4900a;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;}
 @keyframes refBannerIn{from{opacity:0;transform:scale(.9) translateY(-6px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
+/* ── PWA 설치 배너 ── */
+#pwaInstallBanner{position:fixed;bottom:0;left:0;right:0;z-index:8500;
+  background:var(--card);border-top:2px solid var(--mint-lt);
+  padding:16px 20px 24px;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,1.2,.6,1);
+  box-shadow:0 -4px 24px rgba(62,207,142,.15);}
+#pwaInstallBanner.show{transform:translateY(0);}
+.pib-row{display:flex;align-items:center;gap:14px;}
+.pib-icon{width:48px;height:48px;border-radius:14px;object-fit:cover;flex-shrink:0;border:2px solid var(--mint-lt);}
+.pib-text{flex:1;min-width:0;}
+.pib-title{font-size:15px;font-weight:800;color:var(--ink);}
+.pib-sub{font-size:12px;color:var(--ink2);margin-top:2px;}
+.pib-btns{display:flex;gap:8px;margin-top:14px;}
+.pib-install{flex:1;background:var(--mint);color:white;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:800;cursor:pointer;}
+.pib-dismiss{background:var(--bg2);color:var(--ink2);border:none;border-radius:12px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+
 /* ── 설정 모달 ── */
 #settingsModal{position:fixed;inset:0;z-index:9000;display:none;background:rgba(20,16,12,.88);
   backdrop-filter:blur(12px);align-items:center;justify-content:center;}
@@ -904,6 +919,21 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     <div class="login-skip" onclick="skipLogin()">나중에 할게요</div>
   </div>
 </div>
+<!-- PWA 설치 배너 -->
+<div id="pwaInstallBanner">
+  <div class="pib-row">
+    <img class="pib-icon" src="icons/icon-192.png" alt="봇 아레나">
+    <div class="pib-text">
+      <div class="pib-title">앱으로 설치하기 📲</div>
+      <div class="pib-sub">홈 화면에 추가하면 더 빠르게 접속할 수 있어요</div>
+    </div>
+  </div>
+  <div class="pib-btns">
+    <button class="pib-install" onclick="_pwaInstall()">설치하기</button>
+    <button class="pib-dismiss" onclick="_pwaDismiss()">나중에</button>
+  </div>
+</div>
+
 <div class="ticker-w"><div class="ticker-i" id="tkr"></div></div>
 
 <!-- ════ ARENA ════ -->
@@ -5194,6 +5224,56 @@ async function _requestPushPermission() {
     _pushRegistered = true;
     _gToast('🔔 거래 알림 설정 완료!', 'mint');
   } catch(e) { /* 권한 거부 등 조용히 무시 */ }
+}
+
+// ══════════ PWA 설치 프롬프트 ══════════
+var _pwaPrompt = null;
+var _pwaShown = false;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // 한 번 거부했으면 다시 안 보임
+  if(localStorage.getItem('pwa_dismissed') === '1') return;
+  // 로그인 5초 후 또는 첫 거래 후 표시 (초기 로드 방해 방지)
+  setTimeout(_pwaShowBanner, 5000);
+});
+
+// 앱 설치 완료 시 배너 숨김
+window.addEventListener('appinstalled', function() {
+  _pwaHideBanner();
+  localStorage.setItem('pwa_installed', '1');
+  _gToast('✅ 앱 설치 완료!', 'mint');
+});
+
+function _pwaShowBanner() {
+  if(!_pwaPrompt || _pwaShown || localStorage.getItem('pwa_dismissed') === '1') return;
+  if(localStorage.getItem('pwa_installed') === '1') return;
+  _pwaShown = true;
+  document.getElementById('pwaInstallBanner').classList.add('show');
+}
+
+function _pwaHideBanner() {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+}
+
+async function _pwaInstall() {
+  if(!_pwaPrompt) return;
+  _pwaHideBanner();
+  try {
+    await _pwaPrompt.prompt();
+    var result = await _pwaPrompt.userChoice;
+    if(result.outcome === 'accepted') {
+      localStorage.setItem('pwa_installed', '1');
+      _gToast('📲 설치 중...', 'mint');
+    }
+  } catch(e) { /* 무시 */ }
+  _pwaPrompt = null;
+}
+
+function _pwaDismiss() {
+  _pwaHideBanner();
+  localStorage.setItem('pwa_dismissed', '1');
 }
 
 // ══════════ C-V3: 로그인 스트릭 ══════════

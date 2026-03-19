@@ -2,11 +2,13 @@
 // ① 오프라인 캐싱 (TWA/Play Store 필수)
 // ② Web Push 수신
 
-var CACHE_NAME = 'bot-arena-v2';
+var CACHE_NAME = 'bot-arena-v3';
 var SHELL_URLS = [
   '/crypto-bot-arena/',
   '/crypto-bot-arena/index.html',
   '/crypto-bot-arena/manifest.json',
+  '/crypto-bot-arena/offline.html',
+  '/crypto-bot-arena/icons/icon-192.png',
 ];
 
 // ── 설치: 셸 사전 캐시 ──
@@ -54,8 +56,10 @@ self.addEventListener('fetch', function(event) {
         }
         return response;
       }).catch(function() {
-        // 네트워크 실패 → 캐시 또는 인덱스 폴백
-        return cached || caches.match('/crypto-bot-arena/');
+        // 네트워크 실패 → 캐시 → offline.html 순 폴백
+        return cached
+          || caches.match('/crypto-bot-arena/')
+          || caches.match('/crypto-bot-arena/offline.html');
       });
 
       // 캐시 있으면 즉시 반환 + 백그라운드 갱신 (stale-while-revalidate)
