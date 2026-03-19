@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1612"/>
+      <stop offset="100%" stop-color="#0d1008"/>
+    </linearGradient>
+    <radialGradient id="glow1" cx="30%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#3ecf8e" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#3ecf8e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="75%" cy="50%" r="35%">
+      <stop offset="0%" stop-color="#ffb830" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#ffb830" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <rect width="1024" height="500" fill="url(#glow1)"/>
+  <rect width="1024" height="500" fill="url(#glow2)"/>
+
+  <!-- Grid lines -->
+  <g stroke="#3ecf8e" stroke-opacity="0.05" stroke-width="1">
+    <line x1="0" y1="100" x2="1024" y2="100"/>
+    <line x1="0" y1="200" x2="1024" y2="200"/>
+    <line x1="0" y1="300" x2="1024" y2="300"/>
+    <line x1="0" y1="400" x2="1024" y2="400"/>
+    <line x1="128" y1="0" x2="128" y2="500"/>
+    <line x1="256" y1="0" x2="256" y2="500"/>
+    <line x1="384" y1="0" x2="384" y2="500"/>
+    <line x1="512" y1="0" x2="512" y2="500"/>
+    <line x1="640" y1="0" x2="640" y2="500"/>
+    <line x1="768" y1="0" x2="768" y2="500"/>
+    <line x1="896" y1="0" x2="896" y2="500"/>
+  </g>
+
+  <!-- Chart bars (right side decoration) -->
+  <g opacity="0.3">
+    <rect x="620" y="280" width="28" height="120" rx="6" fill="#3ecf8e"/>
+    <rect x="660" y="220" width="28" height="180" rx="6" fill="#3ecf8e"/>
+    <rect x="700" y="300" width="28" height="100" rx="6" fill="#ff6b6b"/>
+    <rect x="740" y="180" width="28" height="220" rx="6" fill="#3ecf8e"/>
+    <rect x="780" y="240" width="28" height="160" rx="6" fill="#3ecf8e"/>
+    <rect x="820" y="260" width="28" height="140" rx="6" fill="#ff6b6b"/>
+    <rect x="860" y="200" width="28" height="200" rx="6" fill="#3ecf8e"/>
+    <rect x="900" y="160" width="28" height="240" rx="6" fill="#3ecf8e"/>
+    <rect x="940" y="220" width="28" height="180" rx="6" fill="#ffb830"/>
+    <rect x="980" y="190" width="28" height="210" rx="6" fill="#3ecf8e"/>
+  </g>
+
+  <!-- Trend line -->
+  <polyline points="620,320 660,270 700,310 740,230 780,250 820,280 860,210 900,175 940,195 990,160"
+    fill="none" stroke="#3ecf8e" stroke-width="2.5" stroke-opacity="0.5" stroke-linecap="round"/>
+
+  <!-- Characters row -->
+  <text x="68" y="230" font-size="72" text-anchor="middle">🐰</text>
+  <text x="148" y="230" font-size="52" text-anchor="middle" opacity="0.7">🐻</text>
+  <text x="218" y="220" font-size="44" text-anchor="middle" opacity="0.6">🦊</text>
+
+  <!-- App name -->
+  <text x="72" y="288" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700"
+    fill="#3ecf8e" letter-spacing="3" opacity="0.8">CRYPTO BOT ARENA</text>
+
+  <text x="64" y="338" font-family="system-ui, -apple-system, sans-serif" font-size="40" font-weight="900"
+    fill="#faf7f2">코딩 없이 만드는</text>
+  <text x="64" y="388" font-family="system-ui, -apple-system, sans-serif" font-size="40" font-weight="900"
+    fill="#3ecf8e">AI 트레이딩 봇</text>
+
+  <!-- Subtitle -->
+  <text x="64" y="426" font-family="system-ui, -apple-system, sans-serif" font-size="17"
+    fill="#faf7f2" opacity="0.5">수인 캐릭터로 업비트 실시간 시세 모의투자 경쟁</text>
+
+  <!-- Badge pills -->
+  <rect x="64" y="448" width="90" height="28" rx="14" fill="#3ecf8e" fill-opacity="0.15"
+    stroke="#3ecf8e" stroke-width="1.5" stroke-opacity="0.5"/>
+  <text x="109" y="467" font-family="system-ui" font-size="12" font-weight="700"
+    fill="#3ecf8e" text-anchor="middle">🎮 게임</text>
+
+  <rect x="162" y="448" width="110" height="28" rx="14" fill="#ffb830" fill-opacity="0.12"
+    stroke="#ffb830" stroke-width="1.5" stroke-opacity="0.4"/>
+  <text x="217" y="467" font-family="system-ui" font-size="12" font-weight="700"
+    fill="#ffb830" text-anchor="middle">📈 모의투자</text>
+
+  <rect x="280" y="448" width="100" height="28" rx="14" fill="#a78bfa" fill-opacity="0.12"
+    stroke="#a78bfa" stroke-width="1.5" stroke-opacity="0.4"/>
+  <text x="330" y="467" font-family="system-ui" font-size="12" font-weight="700"
+    fill="#a78bfa" text-anchor="middle">🏆 리더보드</text>
+
+  <!-- Return rate badge (right) -->
+  <rect x="830" y="60" width="160" height="80" rx="20" fill="#3ecf8e" fill-opacity="0.1"
+    stroke="#3ecf8e" stroke-width="1.5" stroke-opacity="0.4"/>
+  <text x="910" y="100" font-family="system-ui" font-size="28" font-weight="900"
+    fill="#3ecf8e" text-anchor="middle">+23.4%</text>
+  <text x="910" y="125" font-family="system-ui" font-size="12"
+    fill="#3ecf8e" text-anchor="middle" opacity="0.7">이번 주 수익률</text>
+</svg>
