@@ -14,7 +14,7 @@
 | **현재 버전** | Phase 2 진행 중 (Sprint A·B·C·D-D0 완료, 2026-03-19) |
 | **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
-| **개발자** | 시윤 (1인 솔로 개발) |
+| **개발자** | Seeyou (1인 솔로 개발) |
 
 **핵심 컨셉:** 코딩 없이 수인 캐릭터 봇을 만들어 업비트 실시간 시세로 모의투자 경쟁하는 캐주얼 소셜 트레이딩 게임. 금융 용어 대신 게임 언어를 쓰는 것이 핵심 UX 원칙.
 
