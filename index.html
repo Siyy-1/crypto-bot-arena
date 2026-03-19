@@ -878,7 +878,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     </div>
     <button class="set-save" onclick="saveNickname()">저장하기</button>
     <div class="set-logout" onclick="logoutUser()">로그아웃</div>
-    <div style="text-align:center;margin-top:12px;">
+    <div style="text-align:center;margin-top:8px;">
+      <button onclick="deleteAccount()" style="background:none;border:none;font-size:12px;color:var(--coral);cursor:pointer;padding:4px 8px;opacity:.7;">계정 삭제</button>
+    </div>
+    <div style="text-align:center;margin-top:4px;">
       <a href="privacy.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">개인정보처리방침</a>
     </div>
     <div class="set-close" onclick="closeSettings()">닫기</div>
@@ -2031,6 +2034,24 @@ function logoutUser(){
   _stopPortfolioPoll(); // A5: 폴링 중단
   localStorage.removeItem('jwt');localStorage.removeItem('user_nickname');localStorage.removeItem('login_skipped');
   _updateUserPill(); closeSettings(); document.getElementById('loginModal').classList.add('show'); toast('로그아웃 됐어요');
+}
+
+async function deleteAccount(){
+  if(!confirm('정말 계정을 삭제하시겠어요?\n모든 데이터(포트폴리오, 거래이력, 보상)가 영구 삭제됩니다.')) return;
+  const jwt=localStorage.getItem('jwt');
+  if(!jwt){ toast('로그인 후 이용해주세요'); return; }
+  try{
+    const r=await fetch(_API+'/api/auth/me',{method:'DELETE',headers:{'Authorization':'Bearer '+jwt}});
+    if(!r.ok) throw new Error('failed');
+    // 로컬 데이터 전체 초기화
+    localStorage.clear();
+    _updateUserPill();
+    closeSettings();
+    toast('계정이 삭제됐어요. 이용해주셔서 감사합니다.');
+    setTimeout(()=>{ document.getElementById('loginModal').classList.add('show'); }, 1500);
+  }catch(e){
+    toast('삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
+  }
 }
 
 // ── 서버 포트폴리오 로드 (로그인 시 서버 상태로 복원) ──
