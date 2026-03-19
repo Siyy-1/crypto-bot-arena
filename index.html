@@ -5207,6 +5207,35 @@ function wrapSC(){
   const o=selChar;
   window.selChar=function(el){o.apply(this,arguments);setTimeout(moveLocked,50);};
 }
+// ── 데스크탑 팔레트 가로 스크롤 ────────────────────────────────────────────────
+// 마우스 드래그 + 휠로 .pal-scroll 가로 스크롤 지원 (모바일은 터치로 기본 동작)
+function initPalScrollDesktop(){
+  document.querySelectorAll('.pal-scroll').forEach(function(el){
+    if(el._palScroll)return;
+    el._palScroll=true;
+    // 마우스 드래그 스크롤
+    var startX,scrollLeft,dragging=false;
+    el.addEventListener('mousedown',function(e){
+      dragging=true; startX=e.pageX-el.offsetLeft; scrollLeft=el.scrollLeft;
+      el.style.cursor='grabbing'; el.style.userSelect='none';
+    });
+    window.addEventListener('mouseup',function(){
+      if(!dragging)return; dragging=false;
+      el.style.cursor=''; el.style.userSelect='';
+    });
+    el.addEventListener('mousemove',function(e){
+      if(!dragging)return; e.preventDefault();
+      el.scrollLeft=scrollLeft-(e.pageX-el.offsetLeft-startX);
+    });
+    // 마우스 휠 가로 스크롤 (Shift+휠 또는 트랙패드 수평 스크롤)
+    el.addEventListener('wheel',function(e){
+      if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){
+        e.preventDefault();
+        el.scrollLeft+=e.deltaY;
+      }
+    },{passive:false});
+  });
+}
 // ── REMY 튜토리얼 폴링 픽스 ──────────────────────────────────────────────────
 // addBlk/selChar 래퍼는 tut_done 조건 없이 REMY 스텝 기반으로만 unlock() 호출.
 // 아래 poll은 안전망 역할 — 래퍼가 미처 감지 못한 경우 DOM 상태로 fallback 처리.
@@ -5253,7 +5282,14 @@ function init(){
     setTimeout(_checkWeeklyReset, 2000);
   })();
   patchTutDim();patchSafeInt();patchCanvasRetina();wrapBP();wrapSC();moveLocked();
-  startRemyPoll();
+  initPalScrollDesktop();startRemyPoll();
+  // buildPalette 호출 후에도 새로 생긴 .pal-scroll 요소에 재적용
+  (function(){
+    var orig=window.buildPalette;
+    if(typeof orig!=='function'||window._hfPalScroll)return;
+    window._hfPalScroll=true;
+    window.buildPalette=function(){orig.apply(this,arguments);initPalScrollDesktop();};
+  })();
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
 else{init();}
