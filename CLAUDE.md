@@ -11,7 +11,7 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 2 진행 중 (Sprint A 완료, Sprint B 대기, 2026-03-19) |
+| **현재 버전** | Phase 2 진행 중 (Sprint A + 보안 리뷰 R1~R8 완료, Sprint B 대기, 2026-03-19) |
 | **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
 | **개발자** | 시윤 (1인 솔로 개발) |
@@ -23,7 +23,7 @@
 ## 2. 기술 스택 & 아키텍처
 
 ### 현재 (Phase 2 진행 중)
-- **프론트엔드**: `index.html` (~4500줄) — CSS + HTML + JS 단일 파일
+- **프론트엔드**: `index.html` (~4950줄) — CSS + HTML + JS 단일 파일
 - **백엔드**: Node.js + Express, Railway 배포 (`https://bot-arena-server-production.up.railway.app`)
 - **DB**: PostgreSQL (Railway) + Prisma 6.x ORM
 - **Auth**: Kakao OAuth ✅ / Google OAuth ✅ / Apple OAuth ⬜ (Apple Developer 계정 필요)
@@ -146,6 +146,8 @@ _botBlocks     // 현재 봇 블록 상태 { buy: [{id, key, label, params}], se
 _portfolio     // 가상 포트폴리오 { cash, btc, avgCost, trades, lastTradeTs, seed, tzLastHour }
 _chartFetching // 차트 REST fetch 진행 중 여부 (중복 호출 방지 플래그)
 _chartRetry    // 차트 재시도 상태 { n: 횟수, tid: 타이머ID } — 지수 백오프 관리
+_tradePending  // 서버 거래 실행 중 여부 (중복 요청 방지)
+_pollPortfolioTid // 포트폴리오 폴링 타이머 ID (0 = 미실행)
 ```
 
 ### 핵심 함수
@@ -164,9 +166,14 @@ _store.safeInt(k, fb)         // localStorage에서 NaN 안전 정수 읽기
 getWeekKey()                  // ISO 8601 주차 키 반환 (예: '2026w11')
 _evalIndicators()             // RSI-14, 볼린저밴드-20, MACD, 현재 시간 등 지표 계산 → {price, drop, rsi14, bb20, macd, hour}
 _evalBlockCondition(blk, ind) // 블록 조건 평가 → true/false (8가지 블록 타입)
-_execTrade(side, reason, px)  // 가상 매수/매도 실행 (1분 쿨다운, BOTCOIN 보상, 미션 연동)
+_execTrade(side, reason, px)  // 매수/매도 실행 — 로그인 시 POST /api/trade/execute 호출 (서버 검증+원자적 기록)
 renderTradeLog()              // 최근 5개 거래 내역 #tradeLog에 렌더링
 renderMapStats()              // 실전맵 통계(거래 횟수/승률/오늘 수익/순위) 실시간 업데이트
+_esc(s)                       // HTML 특수문자 이스케이프 (XSS 방지) — innerHTML 삽입 전 필수
+_loadServerPortfolio()        // 로그인 시 서버 상태 복원 — Promise.allSettled로 3개 요청 병렬화
+_startPortfolioPoll()         // 60s 폴링 시작 — 탭 숨김/거래 중 스킵, 로그아웃 시 _stopPortfolioPoll()
+_syncPortfolio()              // botcoin만 서버 동기화 (cash/btc/seed는 서버 전용 엔드포인트에서만 변경)
+_resetPortfolioServer(seed)   // POST /api/portfolio/reset 호출 (봇출전/파산리바이벌/주간리셋)
 ```
 
 ---
@@ -186,15 +193,18 @@ crypto-bot-arena/             (c:\workspace\bot_arena)
 
 bot_arena_server/             (c:\workspace\bot_arena_server)
 ├── src/
-│   ├── server.js       ← Express 진입점 (CORS, session, passport, 라우터)
+│   ├── server.js       ← Express 진입점 (trust proxy, CORS, rate limit, 라우터)
+│   ├── db.js           ← Prisma 싱글톤 (global.__prisma — 중복 인스턴스 방지)
 │   ├── routes/
-│   │   ├── auth.js     ← OAuth 3종 (카카오/구글/애플) + /me 엔드포인트
-│   │   ├── leaderboard.js ← 수익률 기준 순위 집계 (Upbit BTC 가격 연동)
+│   │   ├── auth.js     ← OAuth 3종 + /me — nickname(2~20자)/charKey 서버 검증
+│   │   ├── portfolio.js ← botcoin PATCH / reset POST / state GET / trades GET·DELETE
+│   │   ├── trade.js    ← POST /execute — Upbit검증+쿨다운+포트폴리오+기록 원자적 $transaction
+│   │   ├── leaderboard.js ← 수익률 순위 (30s 캐시, take:500 쿼리 한도)
 │   │   └── candles.js  ← Upbit 캔들 REST API 프록시 (/api/candles?tf=&count=)
 │   └── middleware/
 │       └── auth.js     ← JWT 검증 미들웨어 (requireAuth)
 ├── prisma/
-│   └── schema.prisma   ← User(kakaoId/googleId/appleId), Portfolio, Trade
+│   └── schema.prisma   ← User(kakaoId/googleId/appleId), Portfolio, Trade + @@index
 ├── package.json
 └── .env                ← 로컬 전용 (DATABASE_PUBLIC_URL, JWT_SECRET 등)
 ```
@@ -211,16 +221,14 @@ bot_arena_server/             (c:\workspace\bot_arena_server)
 | POST | `/api/auth/apple/callback` | 애플 OAuth 콜백 (POST 방식) |
 | GET | `/api/auth/me` | 내 정보 조회 (JWT 필수) |
 | PATCH | `/api/auth/me` | 닉네임·charKey 수정 (JWT 필수) |
-| PATCH | `/api/portfolio` | 비재무 필드 동기화 — seed/botcoin만 허용 (JWT 필수) |
-| POST | `/api/portfolio/reset` | 포트폴리오 리셋 — 봇출전/파산리바이벌/주간리셋 (JWT 필수) |
+| PATCH | `/api/portfolio` | botcoin만 동기화 (cash/btc/seed는 서버 전용, JWT 필수) |
+| POST | `/api/portfolio/reset` | 포트폴리오 리셋 — seed 100k~10M 검증 (JWT 필수) |
 | GET | `/api/portfolio/state` | 포트폴리오 상태 조회 — cash/btc/avgCost/seed/botcoin/weeklyReturn (JWT 필수) |
 | GET | `/api/portfolio/trades` | 최근 거래 이력 조회 최대 20건 (JWT 필수) |
-| POST | `/api/portfolio/trade` | 거래 기록 저장 레거시 (JWT 필수) |
 | DELETE | `/api/portfolio/trades` | 거래 이력 전체 삭제 — 파산 리바이벌 시 (JWT 필수) |
-| GET | `/api/leaderboard` | 수익률 순위 조회 |
+| GET | `/api/leaderboard` | 수익률 순위 조회 (30s 캐시) |
 | GET | `/api/candles` | 캔들 데이터 (`?tf=minutes/240&count=150`) |
-| POST | `/api/trade/validate` | 거래 검증 레거시 → actualPrice 반환 (JWT 필수) |
-| POST | `/api/trade/execute` | **거래 실행** — 검증+포트폴리오업데이트+기록 원자적 처리 (JWT 필수) |
+| POST | `/api/trade/execute` | **거래 실행** — Upbit 가격검증+쿨다운+포트폴리오+기록 원자적 $transaction (JWT 필수) |
 
 ### 프론트엔드 주요 상수 (index.html)
 ```js
@@ -256,17 +264,22 @@ _store.safeInt('key', 0)  // NaN/null/corrupted 모두 fallback 처리
 
 **4. 배포 전 검증 순서**
 ```bash
-# 1. JS 문법 체크 (index.html의 <script> 블록 내용을 temp.js로 복사 후 실행)
-node --check temp.js
+# 1. JS 문법 체크
+node -e "const fs=require('fs');const html=fs.readFileSync('index.html','utf8');const m=html.match(/<script>([\s\S]*?)<\/script>/g);let js='';if(m)m.forEach(s=>{js+=s.replace(/<\/?script>/g,'')+'\n';});fs.writeFileSync('C:/Windows/Temp/check.js',js);" && node --check "C:/Windows/Temp/check.js"
 
-# 2. div 밸런스 체크
-python3 -c "html=open('index.html').read(); print(html.count('<div') - html.count('</div>'))"
+# 2. 백엔드 문법 체크
+node --check src/routes/trade.js && node --check src/routes/portfolio.js
 
 # 3. 브라우저 하드 리로드
 Ctrl+Shift+R
 
 # 4. Chrome MCP QA 스크립트 실행
 ```
+
+**6. XSS 방지 규칙**
+- `innerHTML`에 서버/유저 데이터 삽입 시 반드시 `_esc()` 헬퍼 사용
+- `_esc(s)` = `&amp;` `&lt;` `&gt;` `&quot;` 4종 이스케이프
+- `textContent` 사용 시 이스케이프 불필요 (자동 처리)
 
 **5. 차트 렌더링 규칙**
 - WebSocket tick 마다 직접 렌더 금지 → rAF + 250ms 게이팅 필수
@@ -363,8 +376,9 @@ Ctrl+Shift+R
 
 ---
 
-## 11.5 이번 세션 추가 완료 (PRD 외)
+## 11.5 세션별 추가 완료 (PRD 외)
 
+### 세션 2 (2026-03-18)
 | # | 항목 | 내용 | 상태 |
 |---|------|------|------|
 | X1 | 닉네임 상단 표시 | currency-bar에 `#userPill` — 캐릭터 이모지 + 닉네임, 탭 → 설정 모달 | ✅ |
@@ -377,6 +391,21 @@ Ctrl+Shift+R
 | X8 | auth.js 트랜잭션 | User + Portfolio 신규 생성 `prisma.$transaction()` 원자성 보장 | ✅ |
 | X9 | 백엔드 API 엔드포인트 추가 | `GET /api/portfolio/trades`, `DELETE /api/portfolio/trades`, `PATCH /api/auth/me` | ✅ |
 | X10 | QA 스크립트 | `qa.js` — div 균형·JS 문법·스코프·onclick·필수심볼 자동 검증 | ✅ |
+
+### 세션 3 (2026-03-19) — Sprint A + 보안 리뷰
+| # | 항목 | 내용 | 상태 |
+|---|------|------|------|
+| V1 | Stored XSS 방지 | `_esc()` 헬퍼 추가, `buildLB()` 닉네임 이스케이프 | ✅ |
+| V2 | 닉네임/charKey 서버 검증 | `PATCH /api/auth/me` — nickname 2~20자 trim, charKey 화이트리스트 | ✅ |
+| V3 | trust proxy 설정 | `app.set('trust proxy', 1)` — Railway X-Forwarded-For rate limit 정확성 | ✅ |
+| R1 | TOCTOU 레이스 조건 | `checkCooldown` → `$transaction` 내부로 이동, buy+sell 동시 우회 차단 | ✅ |
+| R2 | 500 에러 내부 노출 | `trade.js`/`leaderboard.js` `e.message` → generic 메시지 교체 | ✅ |
+| R3 | reason 길이 검증 | 200자 초과 시 400 반환 — DB 오염 방지 | ✅ |
+| R4 | 폴링 조건 수정 | `_startPortfolioPoll()` 항상 시작 (초기 로드 실패 무관) | ✅ |
+| R5 | validate 레거시 제거 | `POST /api/trade/validate` 엔드포인트 + `checkCooldown` 헬퍼 삭제 | ✅ |
+| R6 | 리더보드 캐싱 | 30s 인메모리 캐시 + `take:500` 쿼리 한도 + 스테일 폴백 | ✅ |
+| R7 | 탭 visibility 폴링 | `document.visibilityState !== 'hidden'` 체크 — 백그라운드 탭 API 호출 차단 | ✅ |
+| R8 | 초기 로드 병렬화 | `_loadServerPortfolio` → `Promise.allSettled` 3개 동시 요청 (~400ms 단축) | ✅ |
 
 ---
 
@@ -447,7 +476,7 @@ Ctrl+Shift+R
 ```
 1. 수정 후 항상 Ctrl+Shift+R (하드 리로드)
 2. Chrome MCP javascript_exec로 DOM/함수/스타일 검증
-3. div 카운트 python 스크립트로 확인
+3. node -e로 JS 문법 체크 (python3 사용 불가 — Windows 환경)
 4. 모바일 환경 시뮬레이션 (480px 뷰포트)
 ```
 
@@ -486,4 +515,4 @@ window.addBlk.toString() → 래핑 순서 파악
 
 ---
 
-*최종 업데이트: 2026-03-18 (세션 2회차) | 작업자: 시윤 + Claude*
+*최종 업데이트: 2026-03-19 (세션 3회차) | 작업자: 시윤 + Claude*
