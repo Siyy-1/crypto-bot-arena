@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>크립토 봇 아레나 — 코딩 없이 만드는 AI 트레이딩 봇</title>
+<meta name="description" content="수인 캐릭터 봇으로 업비트 실시간 시세 모의투자! 블록 조합으로 나만의 AI 전략 봇을 만들고 리더보드에서 경쟁하세요. 100% 무료, 실제 돈 손실 없음.">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="크립토 봇 아레나 — 코딩 없이 만드는 AI 트레이딩 봇">
+<meta property="og:description" content="수인 캐릭터 봇으로 업비트 실시간 시세 모의투자! 블록 조합으로 나만의 AI 전략 봇을 만들고 리더보드에서 경쟁하세요.">
+<meta property="og:image"       content="https://bot-arena-server-production.up.railway.app/api/og">
+<meta property="og:url"         content="https://siyy-1.github.io/crypto-bot-arena/landing.html">
+<meta name="twitter:card"       content="summary_large_image">
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-XXXXXXXXXX');
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#faf7f2; --card:#ffffff; --ink:#2d2a24; --ink2:#6b6560; --ink3:#a09890;
+  --mint:#3ecf8e; --coral:#ff6b6b; --gold:#ffb830; --purple:#a78bfa;
+  --fm:'Nunito',sans-serif;
+}
+body{font-family:var(--fm);background:var(--bg);color:var(--ink);max-width:480px;margin:0 auto;min-height:100vh;}
+
+/* ── 히어로 ── */
+.hero{background:linear-gradient(160deg,#1a1612 0%,#0d1008 100%);padding:60px 24px 48px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 30% 50%,rgba(62,207,142,.12),transparent);}
+.hero-tag{display:inline-block;background:rgba(62,207,142,.15);color:var(--mint);border:1px solid rgba(62,207,142,.3);font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:1px;margin-bottom:20px;}
+.hero-em{font-size:64px;margin-bottom:8px;filter:drop-shadow(0 4px 20px rgba(62,207,142,.3));}
+.hero-title{font-size:28px;font-weight:900;color:#faf7f2;line-height:1.25;margin-bottom:8px;}
+.hero-title span{color:var(--mint);}
+.hero-sub{font-size:14px;color:rgba(250,247,242,.6);line-height:1.6;margin-bottom:28px;}
+.hero-cta{display:inline-block;background:var(--mint);color:#fff;font-size:16px;font-weight:800;padding:16px 36px;border-radius:16px;text-decoration:none;box-shadow:0 4px 24px rgba(62,207,142,.4);transition:transform .15s;}
+.hero-cta:active{transform:scale(.97);}
+.hero-note{font-size:11px;color:rgba(250,247,242,.4);margin-top:14px;}
+
+/* ── 통계 ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(62,207,142,.1);border-top:1px solid rgba(62,207,142,.12);border-bottom:1px solid rgba(62,207,142,.12);}
+.stat-item{background:#1a1612;padding:18px 8px;text-align:center;}
+.stat-n{font-size:22px;font-weight:900;color:var(--mint);}
+.stat-l{font-size:10px;color:rgba(250,247,242,.5);margin-top:2px;}
+
+/* ── 섹션 공통 ── */
+.section{padding:40px 20px;}
+.section-tag{font-size:11px;font-weight:700;color:var(--mint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.section-title{font-size:22px;font-weight:900;color:var(--ink);line-height:1.3;margin-bottom:12px;}
+.section-desc{font-size:14px;color:var(--ink2);line-height:1.7;}
+
+/* ── 캐릭터 쇼케이스 ── */
+.chars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px;}
+.char-card{background:var(--card);border-radius:16px;padding:16px 10px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.char-em{font-size:32px;}
+.char-nm{font-size:11px;font-weight:800;color:var(--ink);margin-top:6px;}
+.char-style{font-size:10px;color:var(--ink3);margin-top:2px;}
+.char-season{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;margin-top:4px;}
+.s1{background:rgba(62,207,142,.1);color:var(--mint);}
+.s2{background:rgba(167,139,250,.1);color:var(--purple);}
+
+/* ── 기능 카드 ── */
+.feature-list{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
+.feature-card{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;gap:14px;align-items:flex-start;}
+.feature-icon{font-size:28px;flex-shrink:0;}
+.feature-body h3{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.feature-body p{font-size:12px;color:var(--ink2);line-height:1.6;}
+
+/* ── 스텝 ── */
+.steps{display:flex;flex-direction:column;gap:16px;margin-top:20px;}
+.step{display:flex;gap:14px;align-items:flex-start;}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--mint);color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-body h3{font-size:14px;font-weight:800;color:var(--ink);}
+.step-body p{font-size:12px;color:var(--ink2);margin-top:3px;line-height:1.5;}
+
+/* ── 소셜 증거 ── */
+.proof-bg{background:linear-gradient(160deg,#1a1612,#0d1008);padding:40px 20px;text-align:center;}
+.proof-title{font-size:20px;font-weight:900;color:#faf7f2;margin-bottom:8px;}
+.proof-sub{font-size:13px;color:rgba(250,247,242,.5);margin-bottom:24px;}
+.proof-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:32px;}
+.pbadge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(250,247,242,.8);font-size:12px;font-weight:700;padding:6px 14px;border-radius:20px;}
+.proof-cta{display:inline-block;background:var(--mint);color:#fff;font-size:16px;font-weight:800;padding:16px 40px;border-radius:16px;text-decoration:none;box-shadow:0 4px 24px rgba(62,207,142,.4);}
+
+/* ── 푸터 ── */
+.footer{padding:24px 20px;text-align:center;border-top:1px solid rgba(0,0,0,.06);}
+.footer a{color:var(--ink3);font-size:11px;text-decoration:none;margin:0 8px;}
+.footer p{font-size:11px;color:var(--ink3);margin-top:8px;}
+</style>
+</head>
+<body>
+
+<!-- 히어로 -->
+<section class="hero">
+  <div class="hero-tag">🆕 무료 오픈 베타</div>
+  <div class="hero-em">🤖</div>
+  <h1 class="hero-title">코딩 없이 만드는<br><span>AI 트레이딩 봇</span></h1>
+  <p class="hero-sub">블록 조합으로 나만의 전략을 만들고<br>업비트 실시간 시세로 경쟁하세요.<br>100% 모의투자 — 실제 돈 손실 없음.</p>
+  <a href="./index.html" class="hero-cta" onclick="gtag('event','cta_click',{location:'hero'})">🚀 지금 봇 만들기</a>
+  <div class="hero-note">카카오 · 구글 로그인 | 완전 무료</div>
+</section>
+
+<!-- 통계 바 -->
+<div class="stats">
+  <div class="stat-item"><div class="stat-n">6종</div><div class="stat-l">수인 캐릭터</div></div>
+  <div class="stat-item"><div class="stat-n">14+</div><div class="stat-l">전략 블록</div></div>
+  <div class="stat-item"><div class="stat-n">실시간</div><div class="stat-l">업비트 시세</div></div>
+</div>
+
+<!-- 캐릭터 소개 -->
+<section class="section">
+  <div class="section-tag">캐릭터</div>
+  <h2 class="section-title">나만의 수인 봇을<br>골라보세요</h2>
+  <p class="section-desc">캐릭터마다 전용 전략 블록이 다릅니다. 나의 투자 스타일에 맞는 캐릭터를 선택하세요.</p>
+  <div class="chars-grid">
+    <div class="char-card">
+      <div class="char-em">🐰</div>
+      <div class="char-nm">FLASH</div>
+      <div class="char-style">초단타 스캘핑</div>
+      <span class="char-season s1">S1</span>
+    </div>
+    <div class="char-card">
+      <div class="char-em">🐐</div>
+      <div class="char-nm">THE GOAT</div>
+      <div class="char-style">장기 존버</div>
+      <span class="char-season s1">S1</span>
+    </div>
+    <div class="char-card">
+      <div class="char-em">🐻</div>
+      <div class="char-nm">GRIZZLY</div>
+      <div class="char-style">관망·방어</div>
+      <span class="char-season s1">S1</span>
+    </div>
+    <div class="char-card">
+      <div class="char-em">🦊</div>
+      <div class="char-nm">SLY</div>
+      <div class="char-style">추세추종</div>
+      <span class="char-season s1">S1</span>
+    </div>
+    <div class="char-card">
+      <div class="char-em">🐱</div>
+      <div class="char-nm">NYAN</div>
+      <div class="char-style">퀀트 분석</div>
+      <span class="char-season s2">S2</span>
+    </div>
+    <div class="char-card">
+      <div class="char-em">🦦</div>
+      <div class="char-nm">RIPPLE</div>
+      <div class="char-style">차익거래</div>
+      <span class="char-season s2">S2</span>
+    </div>
+  </div>
+</section>
+
+<!-- 핵심 기능 -->
+<section class="section" style="background:rgba(62,207,142,.04);border-radius:24px;margin:0 12px;padding:32px 20px;">
+  <div class="section-tag">기능</div>
+  <h2 class="section-title">이런 게 있어요</h2>
+  <div class="feature-list">
+    <div class="feature-card">
+      <div class="feature-icon">🧱</div>
+      <div class="feature-body">
+        <h3>블록 기반 전략 빌더</h3>
+        <p>RSI, 볼린저밴드, 이동평균, 시간대 블록을 조합해 나만의 전략을 만드세요. 코딩 불필요!</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-body">
+        <h3>실시간 업비트 시세</h3>
+        <p>BTC/KRW 실시간 체결 데이터로 봇이 실제로 동작합니다. 4시간봉 캔들 차트도 제공.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏆</div>
+      <div class="feature-body">
+        <h3>주간 리더보드</h3>
+        <p>매주 리셋되는 시즌제 랭킹. 수익률로 Iron → Diamond 티어를 올라가며 경쟁하세요.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎁</div>
+      <div class="feature-body">
+        <h3>업적 · 재화 시스템</h3>
+        <p>거래 체결, 수익률, 연속 접속 마일스톤 달성 시 BOTCOIN · DATA SHARDS 보상!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 사용법 -->
+<section class="section">
+  <div class="section-tag">시작하기</div>
+  <h2 class="section-title">3분이면 봇이 완성돼요</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body"><h3>캐릭터 선택</h3><p>6가지 수인 캐릭터 중 내 스타일에 맞는 봇을 고르세요.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body"><h3>전략 블록 조합</h3><p>매수 / 매도 조건을 블록으로 드래그해서 전략을 완성하세요.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body"><h3>투기장 출전</h3><p>봇을 출전시키면 실시간으로 시세를 보며 자동 매매를 시작합니다.</p></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body"><h3>순위 확인 · 개선</h3><p>리더보드에서 순위를 보고 전략을 계속 개선해 보세요!</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA 하단 -->
+<section class="proof-bg">
+  <div class="proof-title">지금 바로 시작하세요</div>
+  <div class="proof-sub">무료 · 실제 돈 손실 없음 · 카카오/구글 로그인</div>
+  <div class="proof-badges">
+    <span class="pbadge">🎮 100% 무료</span>
+    <span class="pbadge">🔒 실제 자금 없음</span>
+    <span class="pbadge">📱 모바일 최적화</span>
+    <span class="pbadge">🔄 주간 시즌 리셋</span>
+  </div>
+  <a href="./index.html" class="proof-cta" onclick="gtag('event','cta_click',{location:'footer'})">🚀 무료로 봇 만들기</a>
+</section>
+
+<!-- 푸터 -->
+<footer class="footer">
+  <div>
+    <a href="./index.html">앱 바로가기</a>
+    <a href="privacy.html">개인정보처리방침</a>
+  </div>
+  <p>© 2026 크립토 봇 아레나 | 본 서비스는 100% 모의투자입니다. 실제 금융 거래가 아닙니다.</p>
+</footer>
+
+</body>
+</html>
