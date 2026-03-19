@@ -2028,13 +2028,6 @@ function _resetPortfolioServer(seed){
     body:JSON.stringify({seed:seed||1000000})
   }).catch(()=>{});
 }
-// 거래 기록 서버 저장
-function _recordTrade(side,price,reason,pnl){
-  const jwt=localStorage.getItem('jwt');if(!jwt)return;
-  fetch(_API+'/api/portfolio/trade',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
-    body:JSON.stringify({side,price,reason,pnl:pnl??null})
-  }).catch(()=>{});
-}
 function updateNameTips(){const c=CHARS[selC];document.getElementById('nmTips').innerHTML='추천: '+c.tips.map(t=>`<span onclick="setNm('${t}')">${t}</span>`).join('');}
 function setNm(n){document.getElementById('botNm').value=n;}
 
@@ -3094,7 +3087,6 @@ async function _execTrade(side, reason, price){
     _syncPortfolio(); // seed + botcoin만 전송 (cash/btc는 서버에서 이미 처리)
   } else {
     _syncPortfolio();
-    _recordTrade(side, price, reason, pnl);
   }
   renderTradeLog();
   renderMapStats();
