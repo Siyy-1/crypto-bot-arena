@@ -454,9 +454,9 @@ Ctrl+Shift+R
 | # | 작업 | 상태 |
 |---|------|------|
 | D-D0 | OG 이미지 서버 렌더 (`GET /api/og?userId=` + @napi-rs/canvas + head 메타 태그) | ✅ 완료 |
-| D-D1 | 딥링크 랜딩 UI (?ref= 접속 시 배너 + 보상 안내 개선) | ⬜ 미착수 |
-| D-D2 | 푸시 알림 (Web Push API + Railway 스케줄러) | ⬜ 미착수 |
-| D-D3 | 버그 배쉬 + 메트릭 대시보드 | ⬜ 미착수 |
+| D-D1 | 딥링크 랜딩 배너 UI (?ref= → .ref-banner 표시 + 비로그인 시 로그인 모달 자동오픈) | ✅ 완료 |
+| D-D2 | Web Push 알림 (sw.js + VAPID + /api/push/subscribe + 일일 크론 KST 9시) | ✅ 완료 |
+| D-D3 | 메트릭 대시보드 (`GET /api/admin/metrics` + `/api/admin/dashboard` HTML) | ✅ 완료 |
 
 ### Phase 3로 연기
 | 항목 | 이유 |
@@ -529,4 +529,4 @@ window.addBlk.toString() → 래핑 순서 파악
 
 ---
 
-*최종 업데이트: 2026-03-19 (세션 4회차) | 작업자: 시윤 + Claude*
+*최종 업데이트: 2026-03-19 (세션 5회차) | 작업자: 시윤 + Claude*
