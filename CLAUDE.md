@@ -11,7 +11,7 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 2 진행 중 (Sprint A 시작, 2026-03-19) |
+| **현재 버전** | Phase 2 진행 중 (Sprint A 완료, Sprint B 대기, 2026-03-19) |
 | **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
 | **개발자** | 시윤 (1인 솔로 개발) |
@@ -389,8 +389,8 @@ Ctrl+Shift+R
 | A2 | `_execTrade()` → `/api/trade/execute` 연동, 오프라인 폴백 제거 (치팅 방지) | ✅ 완료 |
 | A3 | `PATCH /api/portfolio` 재무 필드 제거 + `POST /api/portfolio/reset` 추가 | ✅ 완료 |
 | A4 | Prisma 싱글톤(`src/db.js`) 도입 — 4개 중복 인스턴스 제거 | ✅ 완료 |
-| A5 | 포트폴리오 상태 폴링 (`GET /api/portfolio/state`) | ⬜ 미착수 |
-| A6 | localStorage → 서버 마이그레이션 완성 (서버 값 우선 로딩) | ⬜ 미착수 |
+| A5 | 포트폴리오 상태 폴링 (`GET /api/portfolio/state`) | ✅ 완료 |
+| A6 | localStorage → 서버 마이그레이션 완성 (서버 값 우선 로딩) | ✅ 완료 |
 
 ### Sprint B — 경제 (P1, Mar 26-Apr 1)
 | # | 작업 | 상태 |
