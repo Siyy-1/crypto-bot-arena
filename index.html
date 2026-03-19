@@ -796,6 +796,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .login-btn.kakao{background:#FEE500;color:#3A1D1D;}
 .login-btn.google{background:#fff;color:#333;border:1.5px solid #ddd;}
 .login-skip{font-size:12px;color:var(--ink3);cursor:pointer;text-decoration:underline;margin-top:4px;}
+/* D-D1: 레퍼럴 랜딩 배너 */
+.ref-banner{background:linear-gradient(135deg,rgba(62,207,142,.18),rgba(255,184,48,.12));border:1.5px solid rgba(62,207,142,.35);border-radius:14px;padding:12px 14px;margin-bottom:18px;display:none;animation:refBannerIn .4s cubic-bezier(.34,1.56,.64,1);}
+.ref-banner.show{display:block;}
+.ref-banner-title{font-size:14px;font-weight:900;color:#3ecf8e;margin-bottom:4px;}
+.ref-banner-desc{font-size:12px;color:var(--ink2);line-height:1.5;}
+.ref-banner-reward{display:inline-block;margin-top:6px;background:rgba(255,184,48,.18);color:#d4900a;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;}
+@keyframes refBannerIn{from{opacity:0;transform:scale(.9) translateY(-6px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
 /* ── 설정 모달 ── */
 #settingsModal{position:fixed;inset:0;z-index:9000;display:none;background:rgba(20,16,12,.88);
@@ -870,8 +877,14 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 <!-- ── 로그인 모달 ── -->
 <div id="loginModal">
   <div class="login-card">
-    <div class="login-title">🤖 봇 아레나</div>
-    <div class="login-sub">로그인하면 리더보드에 참여하고<br>내 봇 전적을 저장할 수 있어요!</div>
+    <!-- D-D1: 레퍼럴 랜딩 배너 — pending_referral 있을 때 표시 -->
+    <div class="ref-banner" id="refLoginBanner">
+      <div class="ref-banner-title">🎁 친구 초대 혜택!</div>
+      <div class="ref-banner-desc">친구가 크립토 봇 아레나로 초대했어요.<br>로그인 후 첫 거래를 체결하면 보상이 지급돼요!</div>
+      <span class="ref-banner-reward">🪙 +500 BOTCOIN</span>
+    </div>
+    <div class="login-title" id="loginTitle">🤖 봇 아레나</div>
+    <div class="login-sub" id="loginSub">로그인하면 리더보드에 참여하고<br>내 봇 전적을 저장할 수 있어요!</div>
     <button class="login-btn kakao" onclick="loginKakao()">🟡 카카오로 시작하기</button>
     <button class="login-btn google" onclick="loginGoogle()">🔵 구글로 시작하기</button>
     <div class="login-skip" onclick="skipLogin()">나중에 할게요</div>
@@ -3122,8 +3135,24 @@ var _myUserId = localStorage.getItem('my_user_id') || '';
     var refId = params.get('ref');
     if(refId && refId.length > 5) {
       localStorage.setItem('pending_referral', refId);
-      // URL 정리 (뒤로가기 영향 없이)
       window.history.replaceState({}, '', window.location.pathname);
+    }
+  } catch(e){}
+  // D-D1: pending_referral 있으면 로그인 모달에 배너 표시
+  try {
+    var pending = localStorage.getItem('pending_referral');
+    if(pending) {
+      var banner = document.getElementById('refLoginBanner');
+      if(banner) banner.classList.add('show');
+      // 비로그인 상태에서 ?ref= 접속 시 로그인 유도
+      var jwt = localStorage.getItem('jwt');
+      var skipped = localStorage.getItem('login_skipped');
+      if(!jwt && !skipped) {
+        setTimeout(function(){
+          var m = document.getElementById('loginModal');
+          if(m) m.classList.add('show');
+        }, 900);
+      }
     }
   } catch(e){}
 })();
@@ -3266,6 +3295,8 @@ async function _execTrade(side, reason, price){
     checkAchievement('first_trade');
     // C-V1: 첫 거래 시 레퍼럴 보상 청구
     if(localStorage.getItem('pending_referral')) _claimReferral();
+    // D-D2: 첫 거래 후 3초 뒤 푸시 권한 요청
+    setTimeout(_requestPushPermission, 3000);
   }
   // B4: 누적 10회 업적
   if(_prevTotal + 1 === 10){ checkAchievement('trade_10'); }
@@ -5079,6 +5110,58 @@ function skipLogin(){
   localStorage.setItem('login_skipped','1');
   document.getElementById('loginModal').classList.remove('show');
   if(!localStorage.getItem('tut_done')) setTimeout(startTut,300);
+}
+
+// ══════════ D-D2: Web Push 알림 ══════════
+var _pushRegistered = false;
+
+// Service Worker 등록 (페이지 로드 후)
+if('serviceWorker' in navigator && 'PushManager' in window) {
+  navigator.serviceWorker.register('./sw.js', { scope: './' }).then(function(reg){
+    window._swReg = reg;
+    console.log('[SW] 등록 완료:', reg.scope);
+  }).catch(function(e){ console.warn('[SW] 등록 실패:', e); });
+}
+
+// 푸시 구독 요청 — 로그인 후 첫 거래 시 호출
+async function _requestPushPermission() {
+  if(_pushRegistered) return;
+  var jwt = localStorage.getItem('jwt');
+  if(!jwt || !window._swReg) return;
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'denied') return;
+
+  try {
+    // VAPID 공개키 가져오기
+    var keyRes = await fetch(_API + '/api/push/key');
+    var { publicKey } = await keyRes.json();
+    if(!publicKey) return;
+
+    var perm = await Notification.requestPermission();
+    if(perm !== 'granted') return;
+
+    // urlBase64ToUint8Array 변환
+    var padding = '='.repeat((4 - publicKey.length % 4) % 4);
+    var base64 = (publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
+    var rawData = window.atob(base64);
+    var outputArray = new Uint8Array(rawData.length);
+    for(var i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+
+    var sub = await window._swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: outputArray,
+    });
+    var subJson = sub.toJSON();
+
+    // 서버에 구독 저장
+    await fetch(_API + '/api/push/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
+    });
+    _pushRegistered = true;
+    _gToast('🔔 거래 알림 설정 완료!', 'mint');
+  } catch(e) { /* 권한 거부 등 조용히 무시 */ }
 }
 
 // ══════════ C-V3: 로그인 스트릭 ══════════
