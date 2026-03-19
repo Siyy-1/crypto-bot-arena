@@ -1345,8 +1345,7 @@ const CHARS = {
   goat:  {e:'🐐',n:'THE GOAT',s:'장기 투자',tips:['갓생염소','홀드킹','존버장인','THE_GOAT'],season:1,stats:[18,98,35,88,70]},
   bear:  {e:'🐻',n:'GRIZZLY',s:'관망·방어',tips:['꿀잠곰','BEAR_MODE','수면모드','방어왕'],season:1,stats:[28,92,22,75,95]},
   fox:   {e:'🦊',n:'SLY',s:'추세추종',tips:['꾀돌이폭스','SLY_9000','흐름감지기','조용한수익'],season:1,stats:[68,60,50,94,65]},
-  cat:   {e:'🐱',n:'NYAN',s:'퀀트 분석가',tips:['냥코퀀트','NYAN_QUANT','퀀트냥이','데이터냥'],season:2,stats:[72,75,45,96,60]},
-  otter: {e:'🦦',n:'RIPPLE',s:'차익거래 전문',tips:['수달스캘퍼','OTTER_ARB','차익수달','리플수달'],season:2,stats:[85,55,60,80,75]},
+  // cat, otter: Season 2 (준비 중)
 };
 
 const STATKEYS = ['속도','인내심','리스크','분석력','회복력'];
@@ -1357,8 +1356,6 @@ const CHAR_DESCS = {
   goat:  '로브 입고 모노클 낀 거장.<br>시간이 곧 무기다.',
   bear:  '수면 바지에 코코아 든 곰.<br>폭락장엔 자는 게 답.',
   fox:   '정장 입고 안경 낀 분석가.<br>흐름을 읽고 조용히 수익.',
-  cat:   '데이터만 믿는 퀀트 냥이.<br>감에 의존하지 않는다.',
-  otter: '두 거래소 사이를 헤엄치는<br>차익거래 전문 수달.',
 };
 
 
@@ -1390,12 +1387,10 @@ var QUICK_STARTS = {
   goat:   {name:'🐐 GOAT 장기보유', desc:'과매도 진입 후 목표까지 대기', buy:['rsi_buy'],              sell:['profit_sell','stop_sell']},
   bear:   {name:'🐻 GRIZZLY 수비형',desc:'손절 중심의 안전 운용',        buy:['rsi_buy'],              sell:['stop_sell','profit_sell']},
   fox:    {name:'🦊 SLY 추세추종',  desc:'MACD 신호로 추세 잡기',        buy:['macd_buy'],             sell:['profit_sell','stop_sell']},
-  cat:    {name:'🐱 NYAN 퀀트',     desc:'RSI + BB 복합 신호 전략',      buy:['bband_buy','rsi_buy'],  sell:['profit_sell','stop_sell']},
-  otter:  {name:'🦦 RIPPLE 차익형', desc:'하락·BB 이탈 타이밍 포착',     buy:['btc_drop','bband_buy'], sell:['profit_sell','stop_sell']}
 };
 
 const TKRS=[{n:'BTC',p:'93,421,000',c:'+2.41%',d:'up'},{n:'ETH',p:'4,182,000',c:'+1.87%',d:'up'},{n:'SOL',p:'218,400',c:'-0.93%',d:'dn'},{n:'XRP',p:'892',c:'+4.22%',d:'up'},{n:'DOGE',p:'245',c:'-1.11%',d:'dn'},{n:'BNB',p:'618,000',c:'+0.82%',d:'up'},{n:'MATIC',p:'1,240',c:'+3.18%',d:'up'}];
-const LB=[{r:1,e:'🐱',n:'냥코퀀트',u:'nyan_q',p:'+38.7%',c:'+1.2%',d:'up',me:false},{r:2,e:'🐐',n:'갓생염소',u:'goat_life',p:'+31.2%',c:'-0.4%',d:'dn',me:false},{r:3,e:'🦦',n:'수달스캘퍼',u:'otter_arb',p:'+28.9%',c:'+2.1%',d:'up',me:false},{r:4,e:'🐰',n:'터보빠른토끼',u:'turbo',p:'+25.3%',c:'+0.8%',d:'up',me:false},{r:5,e:'🦊',n:'SLY9000',u:'fox_trader',p:'+22.7%',c:'-1.0%',d:'dn',me:false},{r:23,e:'🤖',n:'내 봇',u:'나',p:'+0.0%',c:'+0.0%',d:'up',me:true}];
+const LB=[{r:1,e:'🐐',n:'갓생염소',u:'goat_life',p:'+38.7%',c:'+1.2%',d:'up',me:false},{r:2,e:'🐰',n:'터보빠른토끼',u:'turbo',p:'+31.2%',c:'-0.4%',d:'dn',me:false},{r:3,e:'🦊',n:'SLY9000',u:'fox_trader',p:'+28.9%',c:'+2.1%',d:'up',me:false},{r:4,e:'🐻',n:'꿀잠곰',u:'bear_mode',p:'+25.3%',c:'+0.8%',d:'up',me:false},{r:5,e:'🐰',n:'번개토끼07',u:'flash_7',p:'+22.7%',c:'-1.0%',d:'dn',me:false},{r:23,e:'🤖',n:'내 봇',u:'나',p:'+0.0%',c:'+0.0%',d:'up',me:true}];
 const LOGS=[{t:'sys',tm:'21:47',m:'봇 실행 중',s:'BTC 추세 전환 신호 대기 중...'},{t:'buy',tm:'21:32',m:'BTC 매수 체결 🎯',s:'가격 <b>93,102,000원</b> · 정상 범위 아래 터치',mk:'B'},{t:'sell',tm:'20:58',m:'BTC 익절 성공 🎉',s:'가격 <b>93,840,000원</b> · 수익 +0.79%',pnl:'+79,000원',mk:'S'},{t:'buy',tm:'19:41',m:'BTC 매수 체결 🎯',s:'가격 <b>92,780,000원</b> · MACD 상승 전환 신호',mk:'B'},{t:'sell',tm:'16:05',m:'거래량 급증 매도 📦',s:'가격 <b>91,200,000원</b> · 거래량 5배 폭증',pnl:'-28,000원',mk:'S'},{t:'sys',tm:'09:00',m:'오늘 09:00 시간대 매수 완료 ⏰',s:'시드 10% 자동 매수 체결'}];
 
 // ══════════ TUTORIAL ══════════
@@ -1419,7 +1414,7 @@ const TUT_STEPS = [
     em:'🐻🐐🦦',
     t:'어떤 캐릭터가 나한테 맞을까?',
     s:'스타일에 따라 골라봐요!',
-    hl:{i:'🎯', t:'🐰 FLASH — 초단타 스캘핑 · ⚡전용 블록 보유<br>🐐 THE GOAT — 장기홀드 존버 · 🏅전용 블록 보유<br>🐻 GRIZZLY — 폭락감지 방어 · 🛡️전용 블록 보유<br>🦊 SLY — 추세추종 분석 · 🦊전용 블록 보유<br>🐱 NYAN — 퀀트 복합지표 · 📊전용 블록 보유<br>🦦 RIPPLE — 김치프리미엄 차익 · 🌊전용 블록 보유'}
+    hl:{i:'🎯', t:'🐰 FLASH — 초단타 스캘핑 · ⚡전용 블록 보유<br>🐐 THE GOAT — 장기홀드 존버 · 🏅전용 블록 보유<br>🐻 GRIZZLY — 폭락감지 방어 · 🛡️전용 블록 보유<br>🦊 SLY — 추세추종 분석 · 🦊전용 블록 보유'}
   },
   // ④ 블록 시스템
   {
@@ -2463,28 +2458,7 @@ const CHAR_AFFINITY = {
     exLabel: '🦊 추세 전용',
     boostLabel: ['MACD 민감도 2배', '볼밴 돌파 강화'],
   },
-  cat: {
-    // 🐱 NYAN — 퀀트 분석가: 기술지표 복합 활용. 직관적 단순 가격 조건 불가
-    label: '퀀트 분석가',
-    desc: 'RSI+BB 복합지표 특화. 단순 가격 하락 매수 불가(데이터 없는 직관 거부).',
-    exclusive: ['cat_quant'],
-    boost: ['rsi_buy', 'bband_buy'],
-    locked: ['btc_drop'],             // 단순 가격조건은 퀀트 철학에 반함
-    color: 'var(--pink)',
-    exLabel: '📊 퀀트 전용',
-    boostLabel: ['RSI 파라미터 확장', 'BB 표준편차 확장'],
-  },
-  otter: {
-    // 🦦 RIPPLE — 차익거래: 거래량+시간대 기회 포착. 장기홀드 성격 불가
-    label: '차익거래 전문가',
-    desc: '거래량·시간대 특화. 기회 포착 민감도 최고. 장기홀드 블록 불가.',
-    exclusive: ['otter_arb'],
-    boost: ['vol_sell', 'time_zone'],
-    locked: ['rsi_buy'],              // RSI 같은 느린 지표보다 빠른 기회 포착 선호
-    color: 'var(--teal)',
-    exLabel: '🌊 차익 전용',
-    boostLabel: ['거래량 감지 3배', '시간대 정밀도 강화'],
-  },
+  // cat, otter: Season 2 (준비 중)
 };
 
 // ── EXCLUSIVE BLOCKS per character ──
@@ -2518,20 +2492,7 @@ const EXCLUSIVE_BDEFS = {
       {k:'cn',u:'연속 상승봉',d:'3',o:['2','3','4','5'],t:'연속 확인',s:'이 횟수 연속 상승 확인 후 진입'},
     ]
   },
-  cat_quant: {
-    l:'📊 멀티 인디케이터', z:'buy', isExclusive:true, charKey:'cat',
-    p:[
-      {k:'rv',u:'이하(RSI)',d:'35',o:['25','30','35','40'],t:'RSI 기준',s:'너무 많이 떨어진 상태 기준'},
-      {k:'bb',u:'σ 하단(BB)',d:'2',o:['1.5','2','2.5'],t:'볼밴 기준',s:'정상 범위 아래 배수'},
-    ]
-  },
-  otter_arb: {
-    l:'🌊 김치프리미엄 매수', z:'buy', isExclusive:true, charKey:'otter',
-    p:[
-      {k:'pm',u:'% 프리미엄 이하',d:'1',o:['0','0.5','1','2'],t:'김프 기준',s:'해외 대비 국내 가격 프리미엄이 이 값 이하면 매수'},
-      {k:'am',u:'% 매수',d:'15',o:['10','15','20','30'],t:'매수량',s:'시드의 몇 %를 매수?'},
-    ]
-  },
+  // cat_quant, otter_arb: Season 2 (준비 중)
 };
 
 // Merge exclusive into BDEFS at runtime
@@ -2567,20 +2528,7 @@ Object.assign(BDEF_META, {
     tip:'추세가 막 시작되는 초입에 올라타는 전략. 타이밍이 핵심입니다.',
     terms:['ma','golden_cross','volatility']
   },
-  cat_quant: {
-    type:'MULTI_INDICATOR_BUY', level:'NYAN 전용', lvClass:'lv-free', lvLabel:'📊 전용',
-    emoji:'📊',
-    desc:'너무 많이 떨어진 상태 AND 정상 범위 아래 동시 충족 시 매수합니다. 🐱 NYAN의 복합 지표 분석력.',
-    tip:'두 조건을 동시에 충족해야 해서 오신호가 적습니다. 정밀도가 생명인 퀀트 전략.',
-    terms:['rsi','bb','avg_price']
-  },
-  otter_arb: {
-    type:'KIMCHI_PREMIUM_BUY', level:'RIPPLE 전용', lvClass:'lv-free', lvLabel:'🌊 전용',
-    emoji:'🌊',
-    desc:'한국 거래소(업비트) 가격이 해외 대비 낮을 때(김프 감소) 매수해 프리미엄 회복을 노립니다. 🦦 RIPPLE 전용.',
-    tip:'김치 프리미엄은 역사적으로 1~5% 사이를 오갑니다. 낮을 때 사는 것이 핵심.',
-    terms:['volume','volatility']
-  },
+  // cat_quant, otter_arb: Season 2 (준비 중)
 });
 
 // Locked block previews (shown greyed out in palette)
@@ -5174,8 +5122,6 @@ const LORE={
   goat:'🏅 THE GOAT는 존버의 신!\n거래량 보고 파는 단타 스타일은 철학에 반해요.',
   bear:'🛡️ GRIZZLY는 방어가 우선!\n하락 시 무조건 매수하는 공격적 방식은 금지.',
   fox:'🦊 SLY는 추세를 따라요!\n시간대 매수는 추세를 무시하는 전략이라 불가.',
-  cat:'📊 NYAN은 데이터만 믿어요!\n단순 가격 조건은 퀀트 철학에 안 맞아요.',
-  otter:'🌊 RIPPLE은 기회를 낚아요!\nRSI보다 빠른 차익을 선호해요.',
 };
 function moveLocked(){
   const k=typeof selC!=='undefined'?selC:'rabbit';
@@ -5524,7 +5470,7 @@ function renderMyPage(){
 function _jwtPayload(){ try{ const t=localStorage.getItem('jwt'); if(!t)return null; return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }catch{return null;} }
 
 // charKey → 이모지 매핑
-const _CHAR_EM={rabbit:'🐰',goat:'🐐',bear:'🐻',fox:'🦊',cat:'🐱',otter:'🦦'};
+const _CHAR_EM={rabbit:'🐰',goat:'🐐',bear:'🐻',fox:'🦊'};
 
 // 리더보드 API 연동 — 실패 시 기존 mock LB 유지
 async function fetchLeaderboard(){
