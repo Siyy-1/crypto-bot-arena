@@ -211,14 +211,16 @@ bot_arena_server/             (c:\workspace\bot_arena_server)
 | POST | `/api/auth/apple/callback` | 애플 OAuth 콜백 (POST 방식) |
 | GET | `/api/auth/me` | 내 정보 조회 (JWT 필수) |
 | PATCH | `/api/auth/me` | 닉네임·charKey 수정 (JWT 필수) |
-| PATCH | `/api/portfolio` | 포트폴리오 상태 동기화 (JWT 필수) |
+| PATCH | `/api/portfolio` | 비재무 필드 동기화 — seed/botcoin만 허용 (JWT 필수) |
+| POST | `/api/portfolio/reset` | 포트폴리오 리셋 — 봇출전/파산리바이벌/주간리셋 (JWT 필수) |
+| GET | `/api/portfolio/state` | 포트폴리오 상태 조회 — cash/btc/avgCost/seed/botcoin/weeklyReturn (JWT 필수) |
 | GET | `/api/portfolio/trades` | 최근 거래 이력 조회 최대 20건 (JWT 필수) |
-| POST | `/api/portfolio/trade` | 거래 기록 저장 (JWT 필수) |
+| POST | `/api/portfolio/trade` | 거래 기록 저장 레거시 (JWT 필수) |
 | DELETE | `/api/portfolio/trades` | 거래 이력 전체 삭제 — 파산 리바이벌 시 (JWT 필수) |
 | GET | `/api/leaderboard` | 수익률 순위 조회 |
 | GET | `/api/candles` | 캔들 데이터 (`?tf=minutes/240&count=150`) |
-| POST | `/api/trade/validate` | 거래 검증 (가격·쿨다운·포트폴리오 조작 감지) → actualPrice 반환 (JWT 필수) |
-| GET | `/api/portfolio/state` | 포트폴리오 상태 조회 — cash/btc/avgCost/seed/botcoin/weeklyReturn (JWT 필수) |
+| POST | `/api/trade/validate` | 거래 검증 레거시 → actualPrice 반환 (JWT 필수) |
+| POST | `/api/trade/execute` | **거래 실행** — 검증+포트폴리오업데이트+기록 원자적 처리 (JWT 필수) |
 
 ### 프론트엔드 주요 상수 (index.html)
 ```js
@@ -383,10 +385,12 @@ Ctrl+Shift+R
 ### Sprint A — 보안 (P0, Mar 19-25)
 | # | 작업 | 상태 |
 |---|------|------|
-| A1 | 서버 거래 검증 API (`POST /api/trade/validate`) | 🔄 진행 중 |
-| A2 | `_execTrade()` 서버 검증 연동 | 🔄 진행 중 |
-| A3 | 포트폴리오 상태 폴링 (`GET /api/portfolio/state`) | 🔄 진행 중 |
-| A4 | localStorage → 서버 마이그레이션 완성 | 🔄 진행 중 |
+| A1 | 서버 거래 실행 API (`POST /api/trade/execute`) — validate+execute+record 원자적 $transaction | ✅ 완료 |
+| A2 | `_execTrade()` → `/api/trade/execute` 연동, 오프라인 폴백 제거 (치팅 방지) | ✅ 완료 |
+| A3 | `PATCH /api/portfolio` 재무 필드 제거 + `POST /api/portfolio/reset` 추가 | ✅ 완료 |
+| A4 | Prisma 싱글톤(`src/db.js`) 도입 — 4개 중복 인스턴스 제거 | ✅ 완료 |
+| A5 | 포트폴리오 상태 폴링 (`GET /api/portfolio/state`) | ⬜ 미착수 |
+| A6 | localStorage → 서버 마이그레이션 완성 (서버 값 우선 로딩) | ⬜ 미착수 |
 
 ### Sprint B — 경제 (P1, Mar 26-Apr 1)
 | # | 작업 | 상태 |
