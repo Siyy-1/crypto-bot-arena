@@ -1107,11 +1107,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   </div>
   <div class="podium-c">
     <div style="text-align:center;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:14px;">🏆 WEEKLY PODIUM</div>
-    <div class="podium">
-      <div class="pod-sl"><div class="pod-av">🐐</div><div class="pod-nm">갓생염소</div><div class="pod-pnl">+31.2%</div><div class="pod-bar b2"><div class="pod-n">2</div></div></div>
-      <div class="pod-sl"><div class="pod-av">🐱</div><div class="pod-nm">냥코퀀트</div><div class="pod-pnl">+38.7%</div><div class="pod-bar b1"><div class="pod-n">1</div></div></div>
-      <div class="pod-sl"><div class="pod-av">🦦</div><div class="pod-nm">수달스캘퍼</div><div class="pod-pnl">+28.9%</div><div class="pod-bar b3"><div class="pod-n">3</div></div></div>
-    </div>
+    <div class="podium" id="podiumWrap"></div>
   </div>
   <div class="lb-tabs">
     <div class="lb-tab active" onclick="switchLb(this,'g')">🌍 전체</div>
@@ -1140,7 +1136,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   <div class="f-scr active" id="fscr1">
     <div class="c-intro">
       <div class="c-intro-t">🤝 파트너를 골라봐!</div>
-      <div class="c-intro-s">봇의 전략 스타일을 결정하는 수인 캐릭터를 선택하세요.<br><span style="color:var(--pink);font-weight:800;">🆕 시즌2 캐릭터 2종 추가!</span></div>
+      <div class="c-intro-s">봇의 전략 스타일을 결정하는 수인 캐릭터를 선택하세요.<br>각 캐릭터마다 전용 블록과 고유한 트레이딩 스타일이 있어요!</div>
     </div>
     <div class="char-grid" id="charGrid"></div>
     <div class="name-sec">
@@ -1400,7 +1396,21 @@ var QUICK_STARTS = {
 };
 
 const TKRS=[{n:'BTC',p:'93,421,000',c:'+2.41%',d:'up'},{n:'ETH',p:'4,182,000',c:'+1.87%',d:'up'},{n:'SOL',p:'218,400',c:'-0.93%',d:'dn'},{n:'XRP',p:'892',c:'+4.22%',d:'up'},{n:'DOGE',p:'245',c:'-1.11%',d:'dn'},{n:'BNB',p:'618,000',c:'+0.82%',d:'up'},{n:'MATIC',p:'1,240',c:'+3.18%',d:'up'}];
-const LB=[{r:1,e:'🐐',n:'갓생염소',u:'goat_life',p:'+38.7%',c:'+1.2%',d:'up',me:false},{r:2,e:'🐰',n:'터보빠른토끼',u:'turbo',p:'+31.2%',c:'-0.4%',d:'dn',me:false},{r:3,e:'🦊',n:'SLY9000',u:'fox_trader',p:'+28.9%',c:'+2.1%',d:'up',me:false},{r:4,e:'🐻',n:'꿀잠곰',u:'bear_mode',p:'+25.3%',c:'+0.8%',d:'up',me:false},{r:5,e:'🐰',n:'번개토끼07',u:'flash_7',p:'+22.7%',c:'-1.0%',d:'dn',me:false},{r:23,e:'🤖',n:'내 봇',u:'나',p:'+0.0%',c:'+0.0%',d:'up',me:true}];
+const LB=[
+  {r:1, e:'🐐',n:'갓생염소',    u:'goat_life',  p:'+38.7%',c:'+1.2%', d:'up',me:false},
+  {r:2, e:'🐰',n:'터보빠른토끼', u:'turbo_7',    p:'+31.2%',c:'-0.4%', d:'dn',me:false},
+  {r:3, e:'🦊',n:'SLY9000',    u:'fox_9000',   p:'+26.4%',c:'+2.1%', d:'up',me:false},
+  {r:4, e:'🐻',n:'꿀잠곰',     u:'bear_zzz',   p:'+21.8%',c:'+0.8%', d:'up',me:false},
+  {r:5, e:'🐰',n:'번개토끼07',  u:'flash_07',   p:'+17.3%',c:'-1.0%', d:'dn',me:false},
+  {r:6, e:'🦊',n:'여우덫',     u:'fox_trap',   p:'+13.9%',c:'+0.5%', d:'up',me:false},
+  {r:7, e:'🐐',n:'존버킹',     u:'hodl_king',  p:'+10.5%',c:'+0.2%', d:'up',me:false},
+  {r:8, e:'🐰',n:'스피드킹99',  u:'speed_99',   p:'+7.8%', c:'-0.7%', d:'dn',me:false},
+  {r:9, e:'🐻',n:'방어왕',     u:'shield_max', p:'+4.9%', c:'+1.1%', d:'up',me:false},
+  {r:10,e:'🦊',n:'추세파도타기', u:'trend_wave', p:'+2.3%', c:'-0.3%', d:'dn',me:false},
+  {r:11,e:'🐐',n:'홀드마스터',  u:'hold_mstr',  p:'+0.8%', c:'+0.1%', d:'up',me:false},
+  {r:12,e:'🐻',n:'수면모드ON',  u:'sleep_mode', p:'-1.4%', c:'-0.2%', d:'dn',me:false},
+  {r:23,e:'🤖',n:'내 봇',      u:'나',          p:'+0.0%', c:'+0.0%', d:'up',me:true},
+];
 const LOGS=[{t:'sys',tm:'21:47',m:'봇 실행 중',s:'BTC 추세 전환 신호 대기 중...'},{t:'buy',tm:'21:32',m:'BTC 매수 체결 🎯',s:'가격 <b>93,102,000원</b> · 정상 범위 아래 터치',mk:'B'},{t:'sell',tm:'20:58',m:'BTC 익절 성공 🎉',s:'가격 <b>93,840,000원</b> · 수익 +0.79%',pnl:'+79,000원',mk:'S'},{t:'buy',tm:'19:41',m:'BTC 매수 체결 🎯',s:'가격 <b>92,780,000원</b> · MACD 상승 전환 신호',mk:'B'},{t:'sell',tm:'16:05',m:'거래량 급증 매도 📦',s:'가격 <b>91,200,000원</b> · 거래량 5배 폭증',pnl:'-28,000원',mk:'S'},{t:'sys',tm:'09:00',m:'오늘 09:00 시간대 매수 완료 ⏰',s:'시드 10% 자동 매수 체결'}];
 
 // ══════════ TUTORIAL ══════════
@@ -1612,6 +1622,24 @@ function fetchInitialPrices(){
 }
 function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function buildLB(data){document.getElementById('lbList').innerHTML=data.map((r,i)=>{const rc=r.r===1?'r1':r.r===2?'r2':r.r===3?'r3':'';const rw=r.me?'me lb-row':r.r===1?'t1 lb-row':'lb-row';const safeN=_esc(r.n);const safeU=_esc(r.u);return `<div class="${rw}" style="animation-delay:${i*.05}s"><div class="lb-rk ${rc}">${r.r}</div><div class="lb-av2">${r.e}</div><div class="lb-info"><div class="lb-bn">${safeN}</div><div class="lb-un">@${safeU}${r.me?'<span class="me-tag">• 나</span>':''}</div></div><div class="lb-rt"><div class="lb-pnl ${r.p.startsWith('+')?'pos':'neg'}">${r.p}</div><div class="lb-chg">${r.d==='up'?'▲':'▼'} ${r.c}</div></div></div>`}).join('');}
+function buildPodium(data){
+  var wrap=document.getElementById('podiumWrap');
+  if(!wrap)return;
+  var top=data.filter(function(r){return !r.me;}).slice(0,3);
+  if(top.length<3){wrap.innerHTML='';return;}
+  // 포디엄 순서: 2위(왼), 1위(가운데), 3위(오른)
+  var order=[top[1],top[0],top[2]];
+  var bars=['b2','b1','b3'];
+  var nums=['2','1','3'];
+  wrap.innerHTML=order.map(function(r,i){
+    return '<div class="pod-sl">'+
+      '<div class="pod-av">'+r.e+'</div>'+
+      '<div class="pod-nm">'+_esc(r.n)+'</div>'+
+      '<div class="pod-pnl">'+r.p+'</div>'+
+      '<div class="pod-bar '+bars[i]+'"><div class="pod-n">'+nums[i]+'</div></div>'+
+      '</div>';
+  }).join('');
+}
 function switchLb(el,t){
   document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');
@@ -3600,7 +3628,7 @@ const ldMsgs=['시즌2 캐릭터 로딩 중... 🐱','신규 블록 준비 중..
 let lmi=0;const lInt=setInterval(()=>{lmi++;if(lmi<ldMsgs.length){document.getElementById('ldMsg').textContent=ldMsgs[lmi];document.getElementById('ldEm').textContent=['🐱','🦦','📚','🎉'][lmi];}},350);
 window.addEventListener('load',()=>{
   setTimeout(()=>{clearInterval(lInt);const ld=document.getElementById('ld');ld.classList.add('out');setTimeout(()=>{ld.remove();if(!_store.getItem('tut_done')){startTut();}},500);},1600);
-  buildTicker();buildLB(LB);buildSpk();startClock();startCd();buildLog();buildCharGrid();buildPalette();
+  buildTicker();buildLB(LB);buildPodium(LB);buildSpk();startClock();startCd();buildLog();buildCharGrid();buildPalette();
   renderTut();
   restoreBotStatus(); // localStorage → 내 봇 현황 복원
 });
@@ -5505,6 +5533,7 @@ async function fetchLeaderboard(){
       window.LB.push({r:'?',e:'🤖',n,u:n,p:'+0.0%',c:'',d:'up',me:true});
     }
     buildLB(window.LB);
+    buildPodium(window.LB);
   }catch(e){ /* 실패 시 mock 유지 */ }
 }
 </script>
