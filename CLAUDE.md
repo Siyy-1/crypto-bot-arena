@@ -11,7 +11,7 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 2 진행 중 (Sprint A + 보안 리뷰 R1~R8 완료, Sprint B 대기, 2026-03-19) |
+| **현재 버전** | Phase 2 진행 중 (Sprint A·B 완료, Sprint C-V1 레퍼럴 완료, 2026-03-19) |
 | **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
 | **개발자** | 시윤 (1인 솔로 개발) |

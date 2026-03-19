@@ -1991,8 +1991,14 @@ async function _loadServerPortfolio(){
     if(meR.status==='rejected'||!meR.value.ok)return;
     const data=await meR.value.json();
     if(data.nickname){localStorage.setItem('user_nickname',data.nickname);}
+    // C-V1: userId 저장 (레퍼럴 링크 생성용)
+    if(data.userId){_myUserId=data.userId;localStorage.setItem('my_user_id',data.userId);}
     _updateUserPill();
     if(data.charKey&&typeof selC!=='undefined') selC=data.charKey;
+    // C-V1: 레퍼럴 대기 중이면 배너
+    if(localStorage.getItem('pending_referral')&&localStorage.getItem('pending_referral')!==_myUserId){
+      setTimeout(function(){ _gToast('🎁 초대 링크 접속 확인! 첫 거래 후 🪙 +500 BOTCOIN 지급', 'gold'); }, 2000);
+    }
 
     // 2. 포트폴리오 상태 (서버가 정답)
     if(stR.status==='fulfilled'&&stR.value.ok){
@@ -3064,6 +3070,60 @@ function _evalBlockCondition(blk, ind){
   }
 }
 
+// ── C-V1: 레퍼럴 시스템 ──────────────────────────────
+var _myUserId = localStorage.getItem('my_user_id') || '';
+// URL ?ref=userId 파싱 (페이지 로드 즉시)
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var refId = params.get('ref');
+    if(refId && refId.length > 5) {
+      localStorage.setItem('pending_referral', refId);
+      // URL 정리 (뒤로가기 영향 없이)
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  } catch(e){}
+})();
+function _getReferralLink(){
+  if(!_myUserId) return null;
+  return 'https://siyy-1.github.io/crypto-bot-arena/?ref=' + _myUserId;
+}
+function _copyReferralLink(){
+  var link = _getReferralLink();
+  if(!link){ _gToast('로그인 후 이용 가능합니다', 'sky'); return; }
+  navigator.clipboard.writeText(link).then(function(){
+    _gToast('🔗 초대 링크 복사 완료! 친구에게 보내세요', 'mint');
+  }).catch(function(){
+    // fallback
+    var ta = document.createElement('textarea');
+    ta.value = link; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    _gToast('🔗 초대 링크 복사 완료!', 'mint');
+  });
+}
+async function _claimReferral(){
+  var pendRef = localStorage.getItem('pending_referral');
+  var jwt = localStorage.getItem('jwt');
+  if(!pendRef || !jwt || !_myUserId) return;
+  if(pendRef === _myUserId) { localStorage.removeItem('pending_referral'); return; }
+  try {
+    var r = await fetch(_API+'/api/referral/claim', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt},
+      body: JSON.stringify({referrerId: pendRef})
+    });
+    var d = await r.json();
+    if(d.ok){
+      _currency.botcoin = _currency.botcoin + 500;
+      localStorage.removeItem('pending_referral');
+      setTimeout(function(){ _gToast('🎁 초대 보상 지급! 🪙 +500 BOTCOIN', 'gold'); }, 800);
+    } else {
+      // already_claimed or referrer_not_found → clean up
+      localStorage.removeItem('pending_referral');
+    }
+  } catch(e){}
+}
+
 // ── 거래 실행 ──
 var _tradePending = false; // 서버 실행 중복 방지
 async function _execTrade(side, reason, price){
@@ -3159,7 +3219,11 @@ async function _execTrade(side, reason, price){
   // B4: 통산 첫 거래 업적 (checkAchievement에서 보상 지급)
   var _prevTotal = _store.safeInt('total_trades_ever', 0);
   _store.setItem('total_trades_ever', _prevTotal + 1);
-  if(_prevTotal === 0){ checkAchievement('first_trade'); }
+  if(_prevTotal === 0){
+    checkAchievement('first_trade');
+    // C-V1: 첫 거래 시 레퍼럴 보상 청구
+    if(localStorage.getItem('pending_referral')) _claimReferral();
+  }
   // B4: 누적 10회 업적
   if(_prevTotal + 1 === 10){ checkAchievement('trade_10'); }
   return true;
@@ -4591,8 +4655,9 @@ window.addEventListener('load',function(){
       <span class="sh-lbl">카카오톡</span>
     </button>
   </div>
-  <div style="font-size:10px;color:rgba(255,255,255,.35);text-align:center;">
-    크립토 봇 아레나 · crypto-bot-arena.vercel.app
+  <button onclick="_copyReferralLink()" style="display:block;width:100%;margin-top:10px;background:rgba(62,207,142,.2);border:1px solid rgba(62,207,142,.4);color:#3ecf8e;border-radius:12px;padding:10px;font-weight:800;font-size:12px;cursor:pointer;">🔗 내 초대 링크 복사 (+500 BOTCOIN)</button>
+  <div style="font-size:10px;color:rgba(255,255,255,.35);text-align:center;margin-top:8px;">
+    크립토 봇 아레나 · siyy-1.github.io/crypto-bot-arena
   </div>
 </div>
 
@@ -4801,6 +4866,12 @@ window.addEventListener('load',function(){
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;" id="missionList">
       <!-- JS로 렌더링 -->
+    </div>
+    <!-- C-V1: 레퍼럴 섹션 -->
+    <div style="margin-top:20px;background:linear-gradient(135deg,rgba(62,207,142,.15),rgba(96,165,250,.15));border:1.5px solid rgba(62,207,142,.3);border-radius:16px;padding:16px;">
+      <div style="font-weight:900;font-size:13px;margin-bottom:6px;">🔗 친구 초대</div>
+      <div style="font-size:11px;color:var(--ink2);margin-bottom:12px;">친구가 첫 거래를 완료하면 <b style="color:var(--mint)">🪙 +500 BOTCOIN</b> 지급!</div>
+      <button onclick="closeMissionSheet();_copyReferralLink();" style="width:100%;background:var(--mint);color:#fff;border:none;border-radius:12px;padding:11px;font-weight:900;font-size:13px;cursor:pointer;">🔗 내 초대 링크 복사</button>
     </div>
     <div style="margin-top:20px;font-weight:900;font-size:14px;margin-bottom:10px;">🏆 업적</div>
     <div style="display:flex;flex-direction:column;gap:8px;" id="achievementList">
