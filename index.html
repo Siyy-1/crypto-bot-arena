@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
-<title>크립토 봇 아레나 v2</title>
+<title>크립토 봇 아레나 — 코딩 없이 만드는 AI 트레이딩 봇</title>
+<meta property="og:type"        content="website">
+<meta property="og:site_name"   content="크립토 봇 아레나">
+<meta property="og:title"       id="ogTitle"       content="크립토 봇 아레나 — 코딩 없이 만드는 AI 트레이딩 봇">
+<meta property="og:description" id="ogDesc"        content="수인 캐릭터 봇으로 업비트 실시간 시세 모의투자! 지금 바로 봇을 만들어 순위에 도전하세요.">
+<meta property="og:image"       id="ogImage"       content="https://bot-arena-server-production.up.railway.app/api/og">
+<meta property="og:url"         id="ogUrl"         content="https://siyy-1.github.io/crypto-bot-arena/">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:image"      id="twImage"       content="https://bot-arena-server-production.up.railway.app/api/og">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -98,6 +106,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .currency-item.bc{background:var(--gold-bg);color:var(--gold);}
 .currency-item.ds{background:var(--purple-bg,#faf5ff);color:var(--purple);}
 .currency-item.user-pill{background:transparent;border:1px solid var(--line);color:var(--ink);font-size:11px;padding:3px 9px;cursor:pointer;margin-right:auto;opacity:0.85;}
+.currency-item.streak-pill{background:rgba(255,107,107,.12);color:#ff6b6b;border:1px solid rgba(255,107,107,.25);font-size:11px;padding:3px 9px;cursor:default;}
 .currency-item span{font-size:11px;}
 .ticker-w{overflow:hidden;background:var(--gold-bg);border-bottom:2px solid var(--gold-lt);padding:7px 0;}
 .ticker-i{display:flex;white-space:nowrap;animation:ticker 28s linear infinite;}
@@ -839,6 +848,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 <div class="sb"><span class="sb-l" id="clk">21:47</span><div class="sb-r"><div class="live-pill"><div class="live-dot"></div>LIVE</div><span>📶</span><span>🔋</span></div></div>
 <div class="currency-bar" id="currencyBar">
   <div class="currency-item user-pill" id="userPill" onclick="openSettings()" style="display:none"></div>
+  <div class="currency-item streak-pill" id="streakPill" style="display:none" title="연속 접속 보너스"></div>
   <div class="currency-item bc">🪙 <span id="botcoinAmt">0</span></div>
   <div class="currency-item ds">💎 <span id="shardsAmt">0</span></div>
 </div>
@@ -1001,7 +1011,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   </div>
   <div class="lb-tabs">
     <div class="lb-tab active" onclick="switchLb(this,'g')">🌍 전체</div>
-    <div class="lb-tab" onclick="switchLb(this,'f')">👥 친구</div>
+    <div class="lb-tab" onclick="switchLb(this,'r')">⚔️ 라이벌</div>
     <div class="lb-tab" onclick="switchLb(this,'s')">동종</div>
   </div>
   <div class="lb-list" id="lbList"></div>
@@ -1448,7 +1458,31 @@ function fetchInitialPrices(){
 }
 function _esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function buildLB(data){document.getElementById('lbList').innerHTML=data.map((r,i)=>{const rc=r.r===1?'r1':r.r===2?'r2':r.r===3?'r3':'';const rw=r.me?'me lb-row':r.r===1?'t1 lb-row':'lb-row';const safeN=_esc(r.n);const safeU=_esc(r.u);return `<div class="${rw}" style="animation-delay:${i*.05}s"><div class="lb-rk ${rc}">${r.r}</div><div class="lb-av2">${r.e}</div><div class="lb-info"><div class="lb-bn">${safeN}</div><div class="lb-un">@${safeU}${r.me?'<span class="me-tag">• 나</span>':''}</div></div><div class="lb-rt"><div class="lb-pnl ${r.p.startsWith('+')?'pos':'neg'}">${r.p}</div><div class="lb-chg">${r.d==='up'?'▲':'▼'} ${r.c}</div></div></div>`}).join('');}
-function switchLb(el,t){document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');if(t==='g'){fetchLeaderboard();}else{const data=window.LB||LB;buildLB(t==='f'?data.filter(r=>r.me||r.r<=3):data);}}
+function switchLb(el,t){
+  document.querySelectorAll('.lb-tab').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  if(t==='g'){
+    fetchLeaderboard();
+  } else if(t==='r'){
+    // 라이벌 탭: 내 순위 앞뒤 유저 표시
+    var data=window.LB||LB;
+    var meIdx=data.findIndex(function(r){return r.me;});
+    var rivals;
+    if(meIdx<0){
+      rivals=data.slice(0,5);
+    } else {
+      var start=Math.max(0,meIdx-3);
+      var end=Math.min(data.length,meIdx+3);
+      rivals=data.slice(start,end);
+    }
+    buildLB(rivals);
+  } else if(t==='s'){
+    // 동종 캐릭터 필터
+    var data=window.LB||LB;
+    var myEm=(document.getElementById('aAv')||{}).textContent||'🐰';
+    buildLB(data.filter(function(r){return r.me||r.e===myEm;}));
+  }
+}
 
 // ══════════ SPARKLINE ══════════
 function buildSpk(){
@@ -1994,6 +2028,15 @@ async function _loadServerPortfolio(){
     // C-V1: userId 저장 (레퍼럴 링크 생성용)
     if(data.userId){_myUserId=data.userId;localStorage.setItem('my_user_id',data.userId);}
     _updateUserPill();
+    // D-D0: OG 메타 태그 유저 맞춤 업데이트
+    if(data.userId){
+      var ogImg='https://bot-arena-server-production.up.railway.app/api/og?userId='+encodeURIComponent(data.userId);
+      var ogUrl='https://siyy-1.github.io/crypto-bot-arena/?ref='+data.userId;
+      ['ogImage','twImage'].forEach(function(id){var el=document.getElementById(id);if(el)el.setAttribute('content',ogImg);});
+      var ogU=document.getElementById('ogUrl');if(ogU)ogU.setAttribute('content',ogUrl);
+      var nm=data.nickname||'봇';
+      var ogT=document.getElementById('ogTitle');if(ogT)ogT.setAttribute('content',nm+'의 봇 — 크립토 봇 아레나');
+    }
     if(data.charKey&&typeof selC!=='undefined') selC=data.charKey;
     // C-V1: 레퍼럴 대기 중이면 배너
     if(localStorage.getItem('pending_referral')&&localStorage.getItem('pending_referral')!==_myUserId){
@@ -4234,10 +4277,6 @@ window.addEventListener('load',function(){
 
   // ── 봇 데이터 수집 ──
   function getBotData() {
-    var charMap = {
-      '🐰':'토끼 FLASH','🐐':'염소 HODL','🐻':'곰 REVERSE','🦊':'여우 TREND',
-      '🐱':'냥 NYAN','🦦':'리플 RIPPLE'
-    };
     var av  = (document.getElementById('aAv')||{}).textContent || '🐰';
     var nm  = (document.getElementById('aNm')||{}).textContent || '플래시 v2.1';
     var ch  = (document.getElementById('aCh')||{}).textContent || '토끼 FLASH';
@@ -4246,7 +4285,11 @@ window.addEventListener('load',function(){
     var rk  = (document.getElementById('aRk')||{}).textContent || '23';
     var pos = !pnl.startsWith('-');
     var nick = localStorage.getItem('user_nickname') || '';
-    return { av, nm, ch, pnl, amt, rk, pos, nick };
+    // 랭킹 퍼센타일 계산 (상위 X%)
+    var rkNum = parseInt(rk) || 1;
+    var lbTotal = (window.LB && window.LB.length > rkNum) ? window.LB.length : rkNum;
+    var rankPct = Math.ceil((rkNum / lbTotal) * 100);
+    return { av, nm, ch, pnl, amt, rk, pos, nick, rankPct };
   }
 
   // ── Canvas 카드 드로잉 ──
@@ -4361,7 +4404,7 @@ window.addEventListener('load',function(){
     var stats = [
       { label:'평가액', value: d.amt },
       { label:'순위',   value: '#' + d.rk },
-      { label:'시즌',   value: 'S1 W12' }
+      { label:'상위',   value: d.rankPct + '%' }
     ];
     var sw = (W - 80) / 3;
     stats.forEach(function(s, i) {
@@ -4474,7 +4517,7 @@ window.addEventListener('load',function(){
     var dataUrl = cv.toDataURL('image/png');
     var appUrl = 'https://crypto-bot-arena.vercel.app';
     var d = getBotData();
-    var text = '내 봇 ' + d.nm + ' 이번 주 수익률 ' + d.pnl + '! 전국 ' + d.rk + '위 🤖\n' +
+    var text = '내 봇 ' + d.nm + ' 이번 주 수익률 ' + d.pnl + '! 전국 ' + d.rk + '위 (상위 ' + d.rankPct + '%) 🤖\n' +
                '나도 봇 만들러 가기 → ' + appUrl;
 
     if (type === 'save') {
@@ -5036,6 +5079,62 @@ function skipLogin(){
   localStorage.setItem('login_skipped','1');
   document.getElementById('loginModal').classList.remove('show');
   if(!localStorage.getItem('tut_done')) setTimeout(startTut,300);
+}
+
+// ══════════ C-V3: 로그인 스트릭 ══════════
+(function(){
+  var today = new Date().toDateString();
+  var lastDate = localStorage.getItem('streak_date') || '';
+  var streak = parseInt(localStorage.getItem('login_streak')||'0') || 0;
+
+  if(lastDate === today) {
+    // 오늘 이미 처리됨 — 배지만 갱신
+    _renderStreakBadge(streak);
+    return;
+  }
+
+  var yesterday = new Date(Date.now() - 86400000).toDateString();
+  if(lastDate === yesterday) {
+    streak += 1;        // 연속 유지
+  } else if(lastDate !== '') {
+    streak = 1;         // 스트릭 끊김 → 리셋
+  } else {
+    streak = 1;         // 첫 방문
+  }
+
+  localStorage.setItem('streak_date', today);
+  localStorage.setItem('login_streak', streak);
+
+  // 마일스톤 보상: 3/7/14/30일
+  var MILESTONES = {3:{bc:100,ds:0}, 7:{bc:300,ds:1}, 14:{bc:500,ds:3}, 30:{bc:1000,ds:10}};
+  var ms = MILESTONES[streak];
+  if(ms) {
+    setTimeout(function(){
+      _currency.botcoin = _currency.botcoin + ms.bc;
+      if(ms.ds > 0) _currency.shards = _currency.shards + ms.ds;
+      _syncPortfolio();
+      var msg = '🔥 ' + streak + '일 연속 접속 보상! 🪙 +' + ms.bc + ' BC';
+      if(ms.ds > 0) msg += '  💎 +' + ms.ds + ' DS';
+      _gToast(msg, 'gold');
+    }, 2000);
+  } else if(streak >= 2) {
+    setTimeout(function(){
+      _gToast('🔥 ' + streak + '일 연속 접속 중!', '');
+    }, 1200);
+  }
+
+  _renderStreakBadge(streak);
+})();
+
+function _renderStreakBadge(streak) {
+  var pill = document.getElementById('streakPill');
+  if(!pill) return;
+  if(streak >= 2) {
+    pill.textContent = '🔥 ' + streak + '일';
+    pill.style.display = 'flex';
+  } else {
+    pill.style.display = 'none';
+  }
 }
 
 // JWT payload 디코드
