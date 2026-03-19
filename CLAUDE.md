@@ -11,7 +11,7 @@
 |------|------|
 | **프로젝트명** | 크립토 봇 아레나 (Crypto Bot Arena) |
 | **배포 URL** | https://siyy-1.github.io/crypto-bot-arena/ |
-| **현재 버전** | Phase 2 진행 중 (Sprint A·B 완료, Sprint C-V1 레퍼럴 완료, 2026-03-19) |
+| **현재 버전** | Phase 2 진행 중 (Sprint A·B·C·D-D0 완료, 2026-03-19) |
 | **PRD 버전** | v5.0 (Lion PM, 2026-03-18) |
 | **스택** | Vanilla HTML/CSS/JS 단일 파일 + Node.js/Express 백엔드, Upbit WebSocket + REST API, GitHub Pages + Railway |
 | **개발자** | 시윤 (1인 솔로 개발) |
@@ -392,6 +392,19 @@ Ctrl+Shift+R
 | X9 | 백엔드 API 엔드포인트 추가 | `GET /api/portfolio/trades`, `DELETE /api/portfolio/trades`, `PATCH /api/auth/me` | ✅ |
 | X10 | QA 스크립트 | `qa.js` — div 균형·JS 문법·스코프·onclick·필수심볼 자동 검증 | ✅ |
 
+### 세션 4 (2026-03-19) — Sprint B·C·D-D0 (바이럴/리텐션 + OG)
+| # | 항목 | 내용 | 상태 |
+|---|------|------|------|
+| B1 | 티어 배지 | Iron/Bronze/Silver/Gold/Diamond — weeklyReturn 기반 | ✅ |
+| B2 | 경제 싱크 | 봇 이름 변경 50BC 차감 | ✅ |
+| B3 | 첫 일일 거래 보상 | 첫 체결 업적(+200BC) 연계 | ✅ |
+| B4 | 업적 5종 | first_trade/trade_10/profit_10/diamond_rank/season_clear | ✅ |
+| C-V1 | 레퍼럴 시스템 | ?ref= 파싱 + POST /api/referral/claim + 양쪽 +500BC | ✅ |
+| C-V2 | 공유 카드 퍼센타일 | 상위 X% 배지 + shareAction 텍스트 | ✅ |
+| C-V3 | 로그인 스트릭 | 3/7/14/30일 마일스톤 보상 + 🔥 배지 | ✅ |
+| C-V4 | 라이벌 리더보드 탭 | 내 순위 앞뒤 6명 + 동종 캐릭터 필터 | ✅ |
+| D-D0 | OG 이미지 서버 | GET /api/og?userId= (@napi-rs/canvas) + head 메타 태그 동적 업데이트 | ✅ |
+
 ### 세션 3 (2026-03-19) — Sprint A + 보안 리뷰
 | # | 항목 | 내용 | 상태 |
 |---|------|------|------|
@@ -429,20 +442,21 @@ Ctrl+Shift+R
 | B3 | 보상 곡선 튜닝 (일일 ~300 획득 / ~200 소비) | ⬜ 미착수 |
 | B4 | 업적 시스템 5종 | ⬜ 미착수 |
 
-### Sprint C — 품질 (P1, Apr 2-8)
+### Sprint C — 바이럴/리텐션 (완료, 2026-03-19)
 | # | 작업 | 상태 |
 |---|------|------|
-| C1 | 코드 4모듈 분리 (`<script src>` 방식, Vite는 Phase 3) | ⬜ 미착수 |
-| C2 | 가상 스크롤 (거래 내역 DOM 5개 제한) | ⬜ 미착수 |
-| C3 | 에러 바운더리 (핵심 함수 try/catch + 자동복구) | ⬜ 미착수 |
-| C4 | QA 스크립트 확장 (_API·safeInt·업적 함수 등 추가 체크) | ⬜ 미착수 |
+| C-V1 | 레퍼럴 시스템 (초대 링크 + `POST /api/referral/claim` + 양쪽 +500BC) | ✅ 완료 |
+| C-V2 | 공유 카드 퍼센타일 (상위 X% 배지 + shareAction 텍스트) | ✅ 완료 |
+| C-V3 | 로그인 스트릭 (3/7/14/30일 마일스톤 BC/DS 보상 + 🔥 배지) | ✅ 완료 |
+| C-V4 | 라이벌 리더보드 탭 (내 순위 앞뒤 6명 + 동종 캐릭터 필터) | ✅ 완료 |
 
 ### Sprint D — 런치 (P0, Apr 9-15)
 | # | 작업 | 상태 |
 |---|------|------|
-| D1 | OG 이미지 서버 렌더 (`GET /api/og?userId=...`) | ⬜ 미착수 |
-| D2 | 딥링크 + 레퍼럴 (`?ref=userId`, `POST /api/referral`) | ⬜ 미착수 |
-| D3 | 버그 배쉬 + 메트릭 대시보드 | ⬜ 미착수 |
+| D-D0 | OG 이미지 서버 렌더 (`GET /api/og?userId=` + @napi-rs/canvas + head 메타 태그) | ✅ 완료 |
+| D-D1 | 딥링크 랜딩 UI (?ref= 접속 시 배너 + 보상 안내 개선) | ⬜ 미착수 |
+| D-D2 | 푸시 알림 (Web Push API + Railway 스케줄러) | ⬜ 미착수 |
+| D-D3 | 버그 배쉬 + 메트릭 대시보드 | ⬜ 미착수 |
 
 ### Phase 3로 연기
 | 항목 | 이유 |
@@ -515,4 +529,4 @@ window.addBlk.toString() → 래핑 순서 파악
 
 ---
 
-*최종 업데이트: 2026-03-19 (세션 3회차) | 작업자: 시윤 + Claude*
+*최종 업데이트: 2026-03-19 (세션 4회차) | 작업자: 시윤 + Claude*
