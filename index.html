@@ -20,6 +20,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="봇 아레나">
+<!-- Google Analytics 4 — 측정 ID를 실제 값으로 교체: https://analytics.google.com/ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+window.dataLayer=window.dataLayer||[];
+function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());
+gtag('config','G-XXXXXXXXXX',{send_page_view:false});
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -843,6 +851,39 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .set-logout{text-align:center;font-size:12px;color:var(--coral);cursor:pointer;margin-bottom:6px;}
 .set-close{text-align:center;font-size:12px;color:var(--ink3);cursor:pointer;text-decoration:underline;}
 
+/* ── 마이페이지 ── */
+.mp-card{background:var(--card);border-radius:20px;box-shadow:var(--neu-sm);margin-bottom:4px;}
+.mp-profile{display:flex;align-items:center;gap:14px;padding:18px;}
+.mp-avatar{font-size:52px;line-height:1;}
+.mp-info{flex:1;min-width:0;}
+.mp-nick{font-size:18px;font-weight:800;color:var(--ink);}
+.mp-sub{font-size:12px;color:var(--ink3);margin-top:3px;}
+.mp-joined{font-size:11px;color:var(--ink3);margin-top:2px;}
+.mp-tier-badge{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.mp-sec{font-size:12px;font-weight:700;color:var(--ink2);margin:18px 0 8px;letter-spacing:.5px;text-transform:uppercase;}
+.mp-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.mp-stat{background:var(--card);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:var(--neu-sm);}
+.mp-sv{font-size:18px;font-weight:800;color:var(--ink);}
+.mp-sl{font-size:10px;color:var(--ink3);margin-top:3px;}
+.mp-currency-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.mp-cur{background:var(--card);border-radius:14px;padding:14px 8px;text-align:center;box-shadow:var(--neu-sm);}
+.mp-cur-icon{font-size:22px;}
+.mp-cur-amt{font-size:16px;font-weight:800;color:var(--ink);margin-top:4px;}
+.mp-cur-lbl{font-size:10px;color:var(--ink3);margin-top:2px;}
+.mp-achievements{display:flex;flex-direction:column;gap:8px;}
+.mp-ach{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:14px;box-shadow:var(--neu-sm);opacity:.4;}
+.mp-ach.earned{opacity:1;}
+.mp-ach-icon{font-size:24px;min-width:30px;text-align:center;}
+.mp-ach-body{flex:1;min-width:0;}
+.mp-ach-name{font-size:13px;font-weight:700;color:var(--ink);}
+.mp-ach-desc{font-size:11px;color:var(--ink3);margin-top:1px;}
+.mp-ach-rwd{font-size:11px;font-weight:700;color:var(--gold);margin-top:2px;}
+.mp-ref-box,.mp-acc-box{background:var(--card);border-radius:16px;padding:16px;box-shadow:var(--neu-sm);}
+.mp-ref-desc{font-size:12px;color:var(--ink2);line-height:1.6;}
+.mp-acc-btn{width:100%;padding:12px;border-radius:12px;font-size:14px;font-weight:700;font-family:var(--fm);cursor:pointer;border:none;margin-bottom:8px;}
+.mp-acc-btn.primary{background:var(--bg2);color:var(--ink2);}
+.mp-acc-btn.danger{background:none;color:var(--coral);font-size:12px;opacity:.7;padding:6px;margin-bottom:0;}
+
 </style>
 </head>
 <body>
@@ -1233,13 +1274,62 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
   <div style="height:16px;"></div>
 </div>
 
+<!-- PAGE: 마이페이지 -->
+<div class="page" id="page-mypage">
+  <div class="pg-wrap">
+    <div class="ha"><div class="ib nd" onclick="startTut()">❓</div><div class="ib" onclick="openSettings()">⚙️</div></div>
+    <!-- 프로필 카드 -->
+    <div class="mp-card mp-profile">
+      <div class="mp-avatar" id="mpAvatar">🤖</div>
+      <div class="mp-info">
+        <div class="mp-nick" id="mpNick">봇마스터</div>
+        <div class="mp-sub" id="mpLoginMethod"></div>
+        <div class="mp-joined" id="mpJoined"></div>
+      </div>
+      <div class="mp-tier-badge" id="mpTier"></div>
+    </div>
+    <!-- 이번 주 성과 -->
+    <div class="mp-sec">📈 이번 주 성과</div>
+    <div class="mp-stats-row">
+      <div class="mp-stat"><div class="mp-sv" id="mpWeekReturn">+0.0%</div><div class="mp-sl">주간 수익률</div></div>
+      <div class="mp-stat"><div class="mp-sv" id="mpTradeCount">0회</div><div class="mp-sl">거래 횟수</div></div>
+      <div class="mp-stat"><div class="mp-sv" id="mpWinRate">—</div><div class="mp-sl">승률</div></div>
+    </div>
+    <!-- 재화 & 스트릭 -->
+    <div class="mp-sec">💰 재화 &amp; 스트릭</div>
+    <div class="mp-currency-row">
+      <div class="mp-cur"><div class="mp-cur-icon">🪙</div><div class="mp-cur-amt" id="mpBotcoin">0</div><div class="mp-cur-lbl">BOTCOIN</div></div>
+      <div class="mp-cur"><div class="mp-cur-icon">💎</div><div class="mp-cur-amt" id="mpShards">0</div><div class="mp-cur-lbl">DATA SHARDS</div></div>
+      <div class="mp-cur"><div class="mp-cur-icon">🔥</div><div class="mp-cur-amt" id="mpStreak">0일</div><div class="mp-cur-lbl">연속 접속</div></div>
+    </div>
+    <!-- 업적 -->
+    <div class="mp-sec">🏆 업적</div>
+    <div class="mp-achievements" id="mpAchievements"></div>
+    <!-- 친구 초대 -->
+    <div class="mp-sec">🎁 친구 초대</div>
+    <div class="mp-ref-box">
+      <div class="mp-ref-desc">친구가 초대 링크로 가입하면 양쪽 모두 🪙 +500 BOTCOIN!</div>
+      <button class="btn btn-mint" onclick="copyReferralLink()" style="width:100%;margin-top:10px;padding:12px;">🔗 초대 링크 복사</button>
+    </div>
+    <!-- 계정 관리 -->
+    <div class="mp-sec">⚙️ 계정 관리</div>
+    <div class="mp-acc-box">
+      <button class="mp-acc-btn primary" onclick="openSettings()">닉네임 · 캐릭터 변경</button>
+      <button class="mp-acc-btn primary" onclick="logoutUser();goPage('arena');">로그아웃</button>
+      <button class="mp-acc-btn danger" onclick="deleteAccount()">계정 삭제</button>
+      <a href="privacy.html" target="_blank" style="display:block;font-size:11px;color:var(--ink3);text-decoration:none;text-align:center;padding:4px;">개인정보처리방침</a>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="bnav">
   <div class="ni active" id="ni-arena" onclick="goPage('arena')"><div class="n-icon">🏆</div><div class="n-lbl">투기장</div></div>
   <div class="ni" id="ni-map" onclick="goPage('map')"><div class="n-icon">📊</div><div class="n-lbl">실전맵</div></div>
   <div class="fab" id="fabBtn" onclick="goPage('factory')">🤖</div>
   <div class="ni" onclick="toast('📦 Phase 2에서 오픈 예정!')"><div class="n-icon">📦</div><div class="n-lbl">컬렉션</div></div>
-  <div class="ni" onclick="toast('👤 Phase 2에서 오픈 예정!')"><div class="n-icon">👤</div><div class="n-lbl">내 정보</div></div>
+  <div class="ni" id="ni-mypage" onclick="goPage('mypage')"><div class="n-icon">👤</div><div class="n-lbl">내 정보</div></div>
 </nav>
 
 <!-- param sheet -->
@@ -1478,7 +1568,7 @@ function startTut(){tutIdx=0;renderTut();document.getElementById('tut').classLis
 // ══════════ NAV ══════════
 let curPage='arena';
 function goPage(pg){
-  if(!['arena','factory','map'].includes(pg)){toast('Phase 2에서 오픈 예정!');return;}
+  if(!['arena','factory','map','mypage'].includes(pg)){toast('Phase 2에서 오픈 예정!');return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   document.getElementById('fCta').classList.remove('show');
@@ -1489,6 +1579,8 @@ function goPage(pg){
   if(pg==='factory'){document.getElementById('fCta').classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
   if(pg==='map'){_chartRetry.n=0;drawChart();renderMapStats();window.scrollTo({top:0,behavior:'smooth'});}
   if(pg==='arena')window.scrollTo({top:0,behavior:'smooth'});
+  if(pg==='mypage'){renderMyPage();window.scrollTo({top:0,behavior:'smooth'});}
+  if(typeof gtag==='function')gtag('event','page_view',{page_title:pg,page_location:location.href+'#'+pg});
 }
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200);}
 
@@ -2100,6 +2192,8 @@ async function _loadServerPortfolio(){
     if(meR.status==='rejected'||!meR.value.ok)return;
     const data=await meR.value.json();
     if(data.nickname){localStorage.setItem('user_nickname',data.nickname);}
+    if(data.loginMethod){localStorage.setItem('login_method',data.loginMethod);}
+    if(data.createdAt){localStorage.setItem('joined_at',data.createdAt);}
     // C-V1: userId 저장 (레퍼럴 링크 생성용)
     if(data.userId){_myUserId=data.userId;localStorage.setItem('my_user_id',data.userId);}
     _updateUserPill();
@@ -2821,6 +2915,7 @@ function closeLaunch(){
   renderTradeLog();
   renderMapStats();
   resetBlocks();setFStep(1);goPage('arena');toast(`🎉 ${nm} 출전 완료!`);
+  if(typeof gtag==='function')gtag('event','bot_launch',{character:selC,bot_name:nm});
 }
 
 // ══════════ BOT TAB ══════════
@@ -5329,6 +5424,63 @@ function _renderStreakBadge(streak) {
     pill.style.display = 'flex';
   } else {
     pill.style.display = 'none';
+  }
+}
+
+// ════════════════════════════════════════
+// 👤 마이페이지 렌더링
+// ════════════════════════════════════════
+function renderMyPage(){
+  var jwt=localStorage.getItem('jwt');
+  if(!jwt){ document.getElementById('loginModal').classList.add('show'); return; }
+  // 프로필
+  var nick=localStorage.getItem('user_nickname')||(_jwtPayload()||{}).nickname||'봇마스터';
+  var ck=typeof selC!=='undefined'?selC:'';
+  var em=(typeof _CHAR_EM!=='undefined'&&_CHAR_EM[ck])||'🤖';
+  document.getElementById('mpAvatar').textContent=em;
+  document.getElementById('mpNick').textContent=nick;
+  // 로그인 방법
+  var lm=localStorage.getItem('login_method')||'';
+  var lmLabel=lm==='kakao'?'🟡 카카오 로그인':lm==='google'?'🔵 구글 로그인':lm==='apple'?'🍎 애플 로그인':'';
+  document.getElementById('mpLoginMethod').textContent=lmLabel;
+  // 가입일
+  var joined=localStorage.getItem('joined_at');
+  var joinedEl=document.getElementById('mpJoined');
+  if(joined&&joinedEl){var d=new Date(joined);joinedEl.textContent='가입 '+d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate();}
+  // 티어
+  var pct=((_portfolio&&_portfolio.weeklyReturn)||0)*100;
+  var t=typeof _getTier==='function'?_getTier(pct):{label:'⚔️ IRON',color:'#64748b',bg:'rgba(100,116,139,.12)'};
+  var tierEl=document.getElementById('mpTier');
+  if(tierEl){tierEl.textContent=t.label;tierEl.style.background=t.bg;tierEl.style.color=t.color;}
+  // 주간 수익률
+  var retEl=document.getElementById('mpWeekReturn');
+  if(retEl){retEl.textContent=(pct>=0?'+':'')+pct.toFixed(1)+'%';retEl.style.color=pct>=0?'var(--mint)':'var(--coral)';}
+  // 거래 통계
+  var trades=(_portfolio&&_portfolio.trades)||[];
+  var sells=trades.filter(function(t){return t.side==='sell';});
+  var wins=sells.filter(function(t){return t.pnl>0;});
+  document.getElementById('mpTradeCount').textContent=trades.length+'회';
+  var wrEl=document.getElementById('mpWinRate');
+  if(wrEl){if(sells.length===0){wrEl.textContent='—';wrEl.style.color='var(--ink)';}else{var wr=Math.round(wins.length/sells.length*100);wrEl.textContent=wr+'%';wrEl.style.color=wr>=50?'var(--mint)':'var(--coral)';}}
+  // 재화
+  document.getElementById('mpBotcoin').textContent=((_currency&&_currency.botcoin)||0).toLocaleString();
+  document.getElementById('mpShards').textContent=(_currency&&_currency.shards)||0;
+  var streak=parseInt(localStorage.getItem('login_streak')||'0')||0;
+  document.getElementById('mpStreak').textContent=streak+'일';
+  // 업적
+  var achEl=document.getElementById('mpAchievements');
+  if(achEl&&typeof ACHIEVEMENTS!=='undefined'){
+    achEl.innerHTML=ACHIEVEMENTS.map(function(a){
+      var earned=!!localStorage.getItem('ach_'+a.id);
+      return '<div class="mp-ach'+(earned?' earned':'')+'">'+
+        '<div class="mp-ach-icon">'+a.icon+'</div>'+
+        '<div class="mp-ach-body">'+
+          '<div class="mp-ach-name">'+(earned?'':' 🔒 ')+a.name+'</div>'+
+          '<div class="mp-ach-desc">'+a.desc+'</div>'+
+          '<div class="mp-ach-rwd">'+a.reward+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
   }
 }
 
