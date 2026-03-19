@@ -1411,7 +1411,6 @@ const LB=[
   {r:12,e:'🐻',n:'수면모드ON',  u:'sleep_mode', p:'-1.4%', c:'-0.2%', d:'dn',me:false},
   {r:23,e:'🤖',n:'내 봇',      u:'나',          p:'+0.0%', c:'+0.0%', d:'up',me:true},
 ];
-const LOGS=[{t:'sys',tm:'21:47',m:'봇 실행 중',s:'BTC 추세 전환 신호 대기 중...'},{t:'buy',tm:'21:32',m:'BTC 매수 체결 🎯',s:'가격 <b>93,102,000원</b> · 정상 범위 아래 터치',mk:'B'},{t:'sell',tm:'20:58',m:'BTC 익절 성공 🎉',s:'가격 <b>93,840,000원</b> · 수익 +0.79%',pnl:'+79,000원',mk:'S'},{t:'buy',tm:'19:41',m:'BTC 매수 체결 🎯',s:'가격 <b>92,780,000원</b> · MACD 상승 전환 신호',mk:'B'},{t:'sell',tm:'16:05',m:'거래량 급증 매도 📦',s:'가격 <b>91,200,000원</b> · 거래량 5배 폭증',pnl:'-28,000원',mk:'S'},{t:'sys',tm:'09:00',m:'오늘 09:00 시간대 매수 완료 ⏰',s:'시드 10% 자동 매수 체결'}];
 
 // ══════════ TUTORIAL ══════════
 const TUT_STEPS = [
@@ -2094,7 +2093,38 @@ function setTf(el){
 }
 
 // ══════════ LOG ══════════
-function buildLog(){document.getElementById('logFeed').innerHTML=LOGS.map((l,i)=>`<div class="log-ent" style="animation-delay:${i*.06}s"><div class="log-tc"><div class="log-t">${l.tm}</div>${i<LOGS.length-1?'<div class="log-ln"></div>':''}</div><div class="log-bub ${l.t}">${l.mk?`<div class="log-mk">${l.mk}</div>`:''}<div class="log-type">${l.t==='buy'?'● BUY':l.t==='sell'?'● SELL':'SYSTEM'}</div><div class="log-main">${l.m}</div><div class="log-sub">${l.s}</div>${l.pnl?`<div class="log-pnl ${l.pnl.startsWith('+')?'pos':'neg'}">${l.pnl}</div>`:''}</div></div>`).join('');}
+function buildLog(){
+  var el=document.getElementById('logFeed');
+  if(!el)return;
+  var trades=(_portfolio.trades||[]).slice().reverse().slice(0,8);
+  if(trades.length===0){
+    el.innerHTML='<div style="text-align:center;padding:28px 0;color:var(--ink3);font-size:13px;line-height:1.7;">아직 거래 내역이 없어요.<br>봇이 조건을 탐색 중입니다 🔍</div>';
+    document.getElementById('logMoreWrap').style.display='none';
+    return;
+  }
+  el.innerHTML=trades.map(function(t,i){
+    var isBuy=t.side==='buy';
+    var d=new Date(t.ts);
+    var tm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    var priceStr=Math.round(t.price).toLocaleString()+'원';
+    var mainMsg=isBuy?'BTC 매수 체결 🎯':(t.pnl!=null&&t.pnl>=0?'BTC 익절 성공 🎉':'BTC 매도 체결');
+    var pnlStr=(t.pnl!=null&&!isBuy)?(t.pnl>=0?'+':'')+t.pnl.toFixed(2)+'%':'';
+    return '<div class="log-ent" style="animation-delay:'+(i*.06)+'s">'
+      +'<div class="log-tc"><div class="log-t">'+tm+'</div>'+(i<trades.length-1?'<div class="log-ln"></div>':'')+'</div>'
+      +'<div class="log-bub '+(isBuy?'buy':'sell')+'">'
+      +'<div class="log-mk">'+(isBuy?'B':'S')+'</div>'
+      +'<div class="log-type">'+(isBuy?'● BUY':'● SELL')+'</div>'
+      +'<div class="log-main">'+mainMsg+'</div>'
+      +'<div class="log-sub">가격 <b>'+priceStr+'</b> · '+_esc(t.reason)+'</div>'
+      +(pnlStr?'<div class="log-pnl '+(t.pnl>=0?'pos':'neg')+'">'+pnlStr+'</div>':'')
+      +'</div></div>';
+  }).join('');
+  var wrap=document.getElementById('logMoreWrap');
+  var cntEl=document.getElementById('logTotalCount');
+  var total=(_portfolio.trades||[]).length;
+  if(wrap) wrap.style.display=total>8?'block':'none';
+  if(cntEl) cntEl.textContent=total>8?'('+total+'건)':'';
+}
 
 // ══════════ CHAR GRID (6 chars) ══════════
 let selC='rabbit',blkCnt=0,pTarget=null,fStep=1;
@@ -3585,14 +3615,35 @@ function renderTradeLog(){
       + '</div>'
     + '</div>';
   }).join('');
+  buildLog();
 }
 
 // ── 로그 모달 ─────────────────────────────────────────────
 window.openLogModal = function(){
   var full = document.getElementById('fullLogList');
-  var feed = document.getElementById('logFeed');
-  if(!full || !feed) return;
-  full.innerHTML = feed.innerHTML;
+  if(!full) return;
+  var trades=(_portfolio.trades||[]).slice().reverse();
+  if(trades.length===0){
+    full.innerHTML='<div style="text-align:center;padding:28px 0;color:var(--ink3);font-size:13px;">아직 거래 내역이 없어요.</div>';
+  } else {
+    full.innerHTML=trades.map(function(t,i){
+      var isBuy=t.side==='buy';
+      var d=new Date(t.ts);
+      var tm=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      var priceStr=Math.round(t.price).toLocaleString()+'원';
+      var mainMsg=isBuy?'BTC 매수 체결 🎯':(t.pnl!=null&&t.pnl>=0?'BTC 익절 성공 🎉':'BTC 매도 체결');
+      var pnlStr=(t.pnl!=null&&!isBuy)?(t.pnl>=0?'+':'')+t.pnl.toFixed(2)+'%':'';
+      return '<div class="log-ent">'
+        +'<div class="log-tc"><div class="log-t">'+tm+'</div>'+(i<trades.length-1?'<div class="log-ln"></div>':'')+'</div>'
+        +'<div class="log-bub '+(isBuy?'buy':'sell')+'">'
+        +'<div class="log-mk">'+(isBuy?'B':'S')+'</div>'
+        +'<div class="log-type">'+(isBuy?'● BUY':'● SELL')+'</div>'
+        +'<div class="log-main">'+mainMsg+'</div>'
+        +'<div class="log-sub">가격 <b>'+priceStr+'</b> · '+_esc(t.reason)+'</div>'
+        +(pnlStr?'<div class="log-pnl '+(t.pnl>=0?'pos':'neg')+'">'+pnlStr+'</div>':'')
+        +'</div></div>';
+    }).join('');
+  }
   document.getElementById('logModal').style.display='flex';
 };
 window.closeLogModal = function(){
