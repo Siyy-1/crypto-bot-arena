@@ -12,6 +12,14 @@
 <meta property="og:url"         id="ogUrl"         content="https://siyy-1.github.io/crypto-bot-arena/">
 <meta name="twitter:card"       content="summary_large_image">
 <meta name="twitter:image"      id="twImage"       content="https://bot-arena-server-production.up.railway.app/api/og">
+<!-- PWA / Play Store 준비 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#faf7f2">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="봇 아레나">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -870,6 +878,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     </div>
     <button class="set-save" onclick="saveNickname()">저장하기</button>
     <div class="set-logout" onclick="logoutUser()">로그아웃</div>
+    <div style="text-align:center;margin-top:12px;">
+      <a href="privacy.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">개인정보처리방침</a>
+    </div>
     <div class="set-close" onclick="closeSettings()">닫기</div>
   </div>
 </div>

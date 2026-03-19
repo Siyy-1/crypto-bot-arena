@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.siyy.cryptobotarena",
+    "sha256_cert_fingerprints": [
+      "TODO: Bubblewrap 실행 후 생성된 서명 키의 SHA-256 해시로 교체"
+    ]
+  }
+}]
