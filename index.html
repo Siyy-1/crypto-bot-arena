@@ -957,6 +957,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
         <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
           <div class="pill mint">● 실행 중</div>
           <div class="pill gold">🏅 <span id="aRk">23</span>위</div>
+          <div class="pill" id="tierPill" style="background:rgba(100,116,139,.12);color:#64748b;">⚔️ IRON</div>
         </div>
         <div style="font-weight:900;font-size:18px;letter-spacing:-.5px;margin-bottom:2px;" id="aNm">내 봇</div>
         <div style="font-size:12px;font-weight:600;color:var(--ink2);">캐릭터: <b style="color:var(--mint)" id="aCh">—</b></div>
@@ -1919,12 +1920,14 @@ function _checkWeeklyReset(){
   _store.setItem('last_season_week',wk);
   var hadTrades=_portfolio.trades&&_portfolio.trades.length>0;
   if(!hadTrades)return;
+  // B4: 시즌 완주 업적
+  checkAchievement('season_clear');
   // 시즌 완료 보상
   var ret=_portfolio.seed>0?(_portfolio.cash/_portfolio.seed-1)*100:0;
   var shards=ret>10?10:ret>0?5:3;
   _currency.shards=(_currency.shards||0)+shards;
   // 포트폴리오 리셋
-  _portfolio={cash:1000000,btc:0,avgCost:0,trades:[],lastTradeTs:0,seed:1000000,tzLastHour:-1};
+  _portfolio={cash:1000000,btc:0,avgCost:0,trades:[],lastTradeTs:0,seed:1000000,tzLastHour:-1,weeklyReturn:0};
   _savePortfolio();
   if(typeof _resetPortfolioServer==='function') _resetPortfolioServer(1000000);
   var _jwt=localStorage.getItem('jwt');
@@ -1996,6 +1999,7 @@ async function _loadServerPortfolio(){
       const p=await stR.value.json();
       _portfolio.cash=p.cash;_portfolio.btc=p.btc;
       _portfolio.avgCost=p.avgCost;_portfolio.seed=p.seed;
+      if(p.weeklyReturn!==undefined)_portfolio.weeklyReturn=p.weeklyReturn;
       _savePortfolio();
       if(p.botcoin!==undefined)_currency.botcoin=p.botcoin;
       if(typeof renderMapStats==='function')renderMapStats();
@@ -2039,6 +2043,7 @@ function _startPortfolioPoll(){
           var p=await r.json();
           var changed=p.cash!==_portfolio.cash||p.btc!==_portfolio.btc||p.seed!==_portfolio.seed;
           _portfolio.cash=p.cash;_portfolio.btc=p.btc;_portfolio.avgCost=p.avgCost;_portfolio.seed=p.seed;
+          if(p.weeklyReturn!==undefined){_portfolio.weeklyReturn=p.weeklyReturn;changed=true;}
           if(p.botcoin!==undefined)_currency.botcoin=p.botcoin;
           if(changed){_savePortfolio();if(typeof renderMapStats==='function')renderMapStats();}
         }
@@ -2666,6 +2671,14 @@ function closeLaunch(){
   document.getElementById('lo').classList.remove('show');
   const nm=document.getElementById('botNm').value||'내 봇';
   const c=CHARS[selC];
+  // B2: 재출전 시 이름 변경이면 50BC 차감
+  const _prev = (function(){ try{ return JSON.parse(_store.getItem('active_bot')||'null'); }catch(e){ return null; } })();
+  if(_prev && _prev.nm && _prev.nm !== nm){
+    if(_currency.botcoin < 50){ toast('🪙 BOTCOIN이 부족해요! (이름 변경 50BC 필요)'); document.getElementById('lo').classList.add('show'); return; }
+    _currency.botcoin = _currency.botcoin - 50;
+    _syncPortfolio();
+    _gToast('✏️ 봇 이름 변경 완료 🪙 -50', 'sky');
+  }
   document.getElementById('aAv').textContent=c.e;
   document.getElementById('aNm').textContent=nm;
   document.getElementById('aCh').textContent=`${c.n} · ${c.s}`;
@@ -2678,7 +2691,7 @@ function closeLaunch(){
   if(mybotEl) mybotEl.style.display = '';
   if(noBotEl) noBotEl.style.display = 'none';
   // 포트폴리오 초기화 (새 봇 출전)
-  _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
+  _portfolio = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1, weeklyReturn: 0 };
   _savePortfolio();
   _resetPortfolioServer(1000000);
   renderTradeLog();
@@ -2821,6 +2834,13 @@ function initCurrency(){
 // ── 미션 진행 체크 ──────────────────────────────────────
 function checkTradeMission(){
   var today = new Date().toDateString();
+  // B3: 하루 첫 거래 +50BC
+  var firstKey = 'm_first_trade_'+today;
+  if(!localStorage.getItem(firstKey)){
+    localStorage.setItem(firstKey, '1');
+    _currency.botcoin = _currency.botcoin + 50;
+    setTimeout(function(){ _gToast('☀️ 오늘 첫 거래 보너스 🪙 +50', 'gold'); }, 400);
+  }
   var key = 'm_trade_'+today;
   var cnt = parseInt(localStorage.getItem(key)||'0') + 1;
   localStorage.setItem(key, cnt);
@@ -2877,8 +2897,24 @@ function updateMissionTimer(){
 }
 setInterval(updateMissionTimer, 1000);
 
+function renderAchievements(){
+  var list = document.getElementById('achievementList');
+  if(!list) return;
+  list.innerHTML = ACHIEVEMENTS.map(function(a){
+    var done = !!localStorage.getItem('ach_'+a.id);
+    return '<div style="background:var(--card);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;opacity:'+(done?'.7':'1')+'">'
+      + '<div style="font-size:24px;min-width:32px;text-align:center;">'+(done?'✅':a.icon)+'</div>'
+      + '<div style="flex:1;">'
+        + '<div style="font-weight:800;font-size:12px;color:var(--ink);">'+a.name+(done?' <span style="color:var(--mint);font-size:10px;">달성!</span>':'')+'</div>'
+        + '<div style="font-size:11px;color:var(--ink3);margin-top:2px;">'+a.desc+'</div>'
+      + '</div>'
+      + '<div style="font-weight:900;font-size:11px;color:var(--gold);white-space:nowrap;">'+a.reward+'</div>'
+    + '</div>';
+  }).join('');
+}
 window.openMissionSheet = function(){
   renderMissions();
+  renderAchievements();
   var el = document.getElementById('missionSheet');
   if(el){ el.style.display='flex'; }
 };
@@ -2896,7 +2932,7 @@ var _botBlocks = { buy: [], sell: [] };
 
 // 가상 포트폴리오 (localStorage 복원)
 var _portfolio = (function(){
-  var def = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1 };
+  var def = { cash: 1000000, btc: 0, avgCost: 0, trades: [], lastTradeTs: 0, seed: 1000000, tzLastHour: -1, weeklyReturn: 0 };
   try {
     var saved = localStorage.getItem('portfolio_v1');
     if(saved){ var parsed = JSON.parse(saved); return Object.assign(def, parsed); }
@@ -3120,16 +3156,57 @@ async function _execTrade(side, reason, price){
   }
   renderTradeLog();
   renderMapStats();
-  // 전체 통산 첫 거래 축하
+  // B4: 통산 첫 거래 업적 (checkAchievement에서 보상 지급)
   var _prevTotal = _store.safeInt('total_trades_ever', 0);
   _store.setItem('total_trades_ever', _prevTotal + 1);
-  if(_prevTotal === 0){
-    setTimeout(function(){
-      _gToast('🎊 첫 체결 성공! 봇이 살아있어요! 🪙 +50', 'gold');
-      _currency.botcoin = _currency.botcoin + 50;
-    }, 700);
-  }
+  if(_prevTotal === 0){ checkAchievement('first_trade'); }
+  // B4: 누적 10회 업적
+  if(_prevTotal + 1 === 10){ checkAchievement('trade_10'); }
   return true;
+}
+
+// ════════════════════════════════════════
+// 🏅 B1: 티어 시스템
+// ════════════════════════════════════════
+function _getTier(pct){
+  if(pct >= 30) return {key:'diamond', label:'💎 DIAMOND', color:'#a78bfa', bg:'rgba(167,139,250,.12)'};
+  if(pct >= 15) return {key:'gold',    label:'🥇 GOLD',    color:'#ffb830', bg:'rgba(255,184,48,.12)'};
+  if(pct >= 5)  return {key:'silver',  label:'🥈 SILVER',  color:'#94a3b8', bg:'rgba(148,163,184,.12)'};
+  if(pct >= 0)  return {key:'bronze',  label:'🥉 BRONZE',  color:'#c47a3a', bg:'rgba(196,122,58,.12)'};
+  return               {key:'iron',    label:'⚔️ IRON',    color:'#64748b', bg:'rgba(100,116,139,.12)'};
+}
+function _updateTierBadge(){
+  var el = document.getElementById('tierPill');
+  if(!el) return;
+  var pct = (_portfolio.weeklyReturn || 0) * 100;
+  var t = _getTier(pct);
+  el.textContent = t.label;
+  el.style.background = t.bg;
+  el.style.color = t.color;
+  // B4: 다이아 업적 체크
+  if(t.key === 'diamond') checkAchievement('diamond_rank');
+}
+
+// ════════════════════════════════════════
+// 🏆 B4: 업적 시스템 (5종)
+// ════════════════════════════════════════
+var ACHIEVEMENTS = [
+  { id:'first_trade',   icon:'🎊', name:'첫 체결',      desc:'처음으로 거래를 체결했어요',         reward:'🪙 +200', type:'bc', amt:200 },
+  { id:'trade_10',      icon:'🔥', name:'거래 고수',     desc:'누적 거래 10회 달성',               reward:'🪙 +100', type:'bc', amt:100 },
+  { id:'profit_10',     icon:'💰', name:'수익왕',        desc:'수익률 +10% 이상 달성',             reward:'💎 +5',   type:'ds', amt:5   },
+  { id:'diamond_rank',  icon:'💎', name:'다이아 달성',   desc:'DIAMOND 티어 진입 (수익률 +30%)',   reward:'💎 +10',  type:'ds', amt:10  },
+  { id:'season_clear',  icon:'🏅', name:'시즌 완주',     desc:'한 주를 끝까지 버텼어요',           reward:'💎 +3',   type:'ds', amt:3   },
+];
+function checkAchievement(id){
+  if(localStorage.getItem('ach_'+id)) return; // 이미 획득
+  localStorage.setItem('ach_'+id, '1');
+  var ach = ACHIEVEMENTS.find(function(a){ return a.id === id; });
+  if(!ach) return;
+  if(ach.type === 'bc'){ _currency.botcoin = _currency.botcoin + ach.amt; }
+  else                 { _currency.shards  = _currency.shards  + ach.amt; }
+  setTimeout(function(){
+    _gToast('🏆 업적 달성! ' + ach.name + ' ' + ach.reward, 'gold');
+  }, 500);
 }
 
 // ── 거래 로그 렌더링 ──
@@ -3178,6 +3255,11 @@ function renderMapStats(){
   if(lbMePnl){ lbMePnl.textContent = pnlText; lbMePnl.className = 'lb-pnl ' + (myPnlNum >= 0 ? 'pos' : 'neg'); }
   var lbMeRk = document.querySelector('.lb-row.me .lb-rk');
   if(lbMeRk) lbMeRk.textContent = myRank;
+
+  // B1: 티어 뱃지 업데이트
+  _updateTierBadge();
+  // B4: 수익왕 업적 — 수익률 10% 이상 달성
+  if(myPnlNum >= 10) checkAchievement('profit_10');
 }
 
 function _fmtReason(r){
@@ -4720,8 +4802,9 @@ window.addEventListener('load',function(){
     <div style="display:flex;flex-direction:column;gap:10px;" id="missionList">
       <!-- JS로 렌더링 -->
     </div>
-    <div style="margin-top:16px;padding:12px;background:var(--mint-bg,#edfaf5);border-radius:14px;text-align:center;font-size:11px;color:var(--ink2);">
-      💡 Phase 2에서 실제 보상 지급 예정이에요
+    <div style="margin-top:20px;font-weight:900;font-size:14px;margin-bottom:10px;">🏆 업적</div>
+    <div style="display:flex;flex-direction:column;gap:8px;" id="achievementList">
+      <!-- JS로 렌더링 -->
     </div>
   </div>
 </div>
