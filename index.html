@@ -937,8 +937,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     <div style="text-align:center;margin-top:8px;">
       <button onclick="deleteAccount()" style="background:none;border:none;font-size:12px;color:var(--coral);cursor:pointer;padding:4px 8px;opacity:.7;">계정 삭제</button>
     </div>
-    <div style="text-align:center;margin-top:4px;">
+    <div style="text-align:center;margin-top:4px;display:flex;justify-content:center;gap:12px;">
       <a href="privacy.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">개인정보처리방침</a>
+      <span style="font-size:11px;color:var(--ink3);">·</span>
+      <a href="terms.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">이용약관</a>
     </div>
     <div class="set-close" onclick="closeSettings()">닫기</div>
   </div>
@@ -958,6 +960,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     <button class="login-btn kakao" onclick="loginKakao()">🟡 카카오로 시작하기</button>
     <button class="login-btn google" onclick="loginGoogle()">🔵 구글로 시작하기</button>
     <div class="login-skip" onclick="skipLogin()">나중에 할게요</div>
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--ink3);line-height:1.8;">
+      로그인 시 <a href="terms.html" target="_blank" style="color:var(--ink3);text-decoration:underline;">이용약관</a> 및
+      <a href="privacy.html" target="_blank" style="color:var(--ink3);text-decoration:underline;">개인정보처리방침</a>에 동의하는 것으로 간주합니다.
+    </div>
   </div>
 </div>
 <!-- PWA 설치 배너 -->
@@ -1317,7 +1323,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
       <button class="mp-acc-btn primary" onclick="openSettings()">닉네임 · 캐릭터 변경</button>
       <button class="mp-acc-btn primary" onclick="logoutUser();goPage('arena');">로그아웃</button>
       <button class="mp-acc-btn danger" onclick="deleteAccount()">계정 삭제</button>
-      <a href="privacy.html" target="_blank" style="display:block;font-size:11px;color:var(--ink3);text-decoration:none;text-align:center;padding:4px;">개인정보처리방침</a>
+      <div style="display:flex;justify-content:center;gap:12px;padding:4px;">
+        <a href="privacy.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">개인정보처리방침</a>
+        <span style="font-size:11px;color:var(--ink3);">·</span>
+        <a href="terms.html" target="_blank" style="font-size:11px;color:var(--ink3);text-decoration:none;">이용약관</a>
+      </div>
     </div>
     <div style="height:80px;"></div>
   </div>
