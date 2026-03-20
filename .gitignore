@@ -21,3 +21,16 @@ Thumbs.db
 .DS_Store
 
 /generated/prisma
+
+# 프론트 디렉토리에 실수로 생성된 Prisma/Node 잔재
+node_modules/
+prisma/
+prisma.config.ts
+package.json
+package-lock.json
+
+# Claude Code 프로젝트 문서 (로컬 전용)
+CLAUDE.md
+.claude-octopus/
+crypto_bot_arena_PRD_v5.md
+crypto_bot_arena_PRD_v5.pdf
