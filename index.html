@@ -286,7 +286,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
 .lb-tabs{display:flex;gap:8px;margin:0 20px 12px;}
 .lb-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:800;color:var(--ink2);background:var(--card);border-radius:var(--rs);cursor:pointer;border:2px solid var(--bg2);transition:all .2s;box-shadow:var(--neu-sm);}
 .lb-tab.active{background:var(--gold-lt);color:#7a5c00;border-color:var(--gold);box-shadow:var(--neu-in);}
-.lb-list{padding:0 20px 8px;display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.lb-list{padding:0 20px 8px;display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .lb-row{background:var(--card);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;border:2px solid var(--bg2);box-shadow:var(--neu-sm);transition:all .12s;animation:fadeUp .4s ease both;position:relative;}
 .lb-row:active{transform:scale(.98);box-shadow:var(--neu-in);}
 .lb-row.me{border-color:var(--mint);background:var(--mint-bg);}
@@ -1115,7 +1115,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);max-width:480px;
     <div class="lb-tab" onclick="switchLb(this,'s')">동종</div>
   </div>
   <div class="lb-list" id="lbList"></div>
-  <div style="height:16px;"></div>
+  <div style="height:calc(var(--nav-h) + 40px);"></div>
 </div>
 
 <!-- ════ FACTORY ════ -->
